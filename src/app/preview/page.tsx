@@ -1,18 +1,17 @@
 'use client';
 
 import React, { useEffect, useState, Suspense } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { ArrowLeft, Calendar, Clock, Mail, Loader2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import Section from '../components/Section';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { supabase } from '../lib/supabase';
 
-// 1. Create the inner component that uses useSearchParams
+// 1. Create a sub-component that handles the search params logic
 const PreviewContent: React.FC = () => {
   usePageTitle('Live Preview');
   const searchParams = useSearchParams();
-  const router = useRouter();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
@@ -84,7 +83,7 @@ const PreviewContent: React.FC = () => {
 
   return (
     <>
-      {/* Improved Floating Banner */}
+      {/* Floating Banner */}
       <div className="fixed bottom-6 right-6 z-[100] animate-in slide-in-from-bottom-10 fade-in duration-700">
         <div className="bg-slate-900/90 backdrop-blur-md text-white px-5 py-3 rounded-full shadow-2xl flex items-center gap-3 border border-white/10">
             <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse"></div>
@@ -166,7 +165,7 @@ const PreviewContent: React.FC = () => {
   );
 };
 
-// 2. Export the parent component with Suspense
+// 2. Wrap the logic in a Suspense boundary for the default export
 const PreviewPage: React.FC = () => {
   return (
     <div className="relative bg-white min-h-screen">
