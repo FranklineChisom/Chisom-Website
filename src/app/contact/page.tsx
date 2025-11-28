@@ -1,8 +1,10 @@
+'use client';
+
 import React, { useState } from 'react';
-import Section from '../components/Section';
-import { useData } from '../contexts/DataContext';
-import { usePageTitle } from '../hooks/usePageTitle';
-import { useSEO } from '../hooks/usePageTitle';
+import Section from '@/components/Section';
+import { useData } from '@/contexts/DataContext';
+import { usePageTitle } from '@/hooks/usePageTitle';
+import { useSEO } from '@/hooks/usePageTitle';
 
 // Font Awesome Imports
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';

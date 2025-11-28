@@ -1,29 +1,25 @@
+'use client';
+
 import React, { useState } from 'react';
-import { useParams, Link, Navigate } from 'react-router-dom';
+import { useParams, useRouter } from 'next/navigation'; // 1. Next.js hooks
+import Link from 'next/link';
 import { ArrowLeft, Calendar, Mail, Check, AlertCircle } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
-import { useData } from '../contexts/DataContext';
-import { usePageTitle } from '../hooks/usePageTitle';
-import Section from '../components/Section';
-import { useSEO } from '../hooks/usePageTitle';
+import { useData } from '@/contexts/DataContext';
+import Section from '@/components/Section';
 
 const NewsletterPost: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const params = useParams(); // 2. Get params from Next.js hook
+  const router = useRouter(); // 3. For programmatic navigation
+  const id = params?.slug as string; // Access the dynamic segment safely
+
   const { newsletters, addSubscriber, isLoading } = useData();
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   
-const post = newsletters.find(n => n.slug === id || n.id === id);
+  const post = newsletters.find(n => n.slug === id || n.id === id);
 
-useSEO({
-  title: post?.title || 'Newsletter',
-  description: post?.description || '',
-  keywords: 'newsletter, legal analysis, AfCFTA, African trade law',
-  url: `https://franklinechisom.com/newsletter/${post?.slug}`,
-  type: 'article',
-  image: post?.coverImage
-});
-  // Show loading state while data is being fetched
+  // 4. Handle Loading & Redirects
   if (isLoading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
@@ -35,23 +31,17 @@ useSEO({
     );
   }
 
-  // Only redirect if we're done loading and still no post found
   if (!isLoading && !post) {
-    return <Navigate to="/" replace />;
-  }
-
-  // Safety check (shouldn't happen but TypeScript needs it)
-  if (!post) {
+    router.replace('/'); // 5. Use router.replace instead of <Navigate>
     return null;
   }
 
-const handleSubscribe = async () => {
+  if (!post) return null;
+
+  const handleSubscribe = async () => {
     if(!email) return;
-
     setStatus('loading');
-
     const success = await addSubscriber(email);
-    
     setTimeout(() => {
         if(success) {
             setStatus('success');
@@ -59,12 +49,12 @@ const handleSubscribe = async () => {
             setStatus('error');
         }
     }, 500);
-};
+  };
 
   return (
     <div className="max-w-3xl mx-auto px-6 pt-8 pb-20">
       <Section>
-        <Link to="/" className="inline-flex items-center text-sm text-slate-500 hover:text-primary mb-8 transition-colors">
+        <Link href="/" className="inline-flex items-center text-sm text-slate-500 hover:text-primary mb-8 transition-colors">
           <ArrowLeft size={16} className="mr-2" /> Back to Home
         </Link>
         
@@ -83,6 +73,7 @@ const handleSubscribe = async () => {
 
         {post.coverImage && (
           <div className="mb-10">
+            {/* Optimized standard image tag for now, can upgrade to next/image later */}
             <img 
               src={post.coverImage} 
               alt={post.title} 
@@ -95,7 +86,6 @@ const handleSubscribe = async () => {
           <ReactMarkdown>{post.content}</ReactMarkdown>
         </div>
 
-        {/* Subscribe Footer for the Issue */}
         <div className="mt-16 pt-10 border-t border-slate-100 bg-slate-50 p-8 rounded-sm">
              <h4 className="font-serif text-xl text-primary mb-2">Subscribe for future updates</h4>
              <p className="text-slate-600 text-sm leading-relaxed mb-6">
@@ -107,7 +97,7 @@ const handleSubscribe = async () => {
                         <div className="flex items-center gap-2 text-primary font-medium w-full py-2">
                             <Check size={20} /> Thanks for subscribing!
                         </div>
-                        <Link to={`/unsubscribe?email=${encodeURIComponent(email)}`} className="text-xs text-slate-400 hover:text-primary underline ml-7">
+                        <Link href={`/unsubscribe?email=${encodeURIComponent(email)}`} className="text-xs text-slate-400 hover:text-primary underline ml-7">
                              Mistake? Unsubscribe here.
                         </Link>
                      </div>
@@ -123,7 +113,7 @@ const handleSubscribe = async () => {
                          </div>
                          <div className="flex gap-4 ml-7 text-xs">
                              <button onClick={() => setStatus('idle')} className="text-primary hover:underline">Try another email</button>
-                             <Link to={`/unsubscribe?email=${encodeURIComponent(email)}`} className="text-slate-400 hover:text-primary underline">
+                             <Link href={`/unsubscribe?email=${encodeURIComponent(email)}`} className="text-slate-400 hover:text-primary underline">
                                 Unsubscribe
                              </Link>
                          </div>

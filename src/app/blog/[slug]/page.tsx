@@ -12,15 +12,17 @@ import { notFound } from 'next/navigation';
 export const revalidate = 60;
 
 interface Props {
-  params: { slug: string };
+  params: Promise<{ slug: string }>; // Updated: params is now a Promise
 }
 
 // 1. Generate Metadata
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const params = await props.params; // Await the params
+  
   const { data: post } = await supabase
     .from('blog_posts')
     .select('*')
-    .eq('slug', params.slug) // Changed from .or() to .eq() for safety
+    .eq('slug', params.slug)
     .single();
 
   if (!post) {
@@ -45,7 +47,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 // 2. Fetch Data
 async function getBlogPost(slug: string) {
-  // Try finding by slug first (Standard)
+  if (!slug) return null;
+  
   const { data, error } = await supabase
     .from('blog_posts')
     .select('*')
@@ -61,7 +64,8 @@ async function getBlogPost(slug: string) {
 }
 
 // 3. Page Component
-export default async function BlogPost({ params }: Props) {
+export default async function BlogPost(props: Props) {
+  const params = await props.params; // Await the params here too
   const post = await getBlogPost(params.slug);
 
   if (!post) {

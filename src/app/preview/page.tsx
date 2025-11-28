@@ -1,14 +1,16 @@
+'use client';
+
 import React, { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'next/navigation'; // Changed from react-router-dom
 import { ArrowLeft, Calendar, Clock, Mail, Eye, Loader2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
-import Section from '../components/Section';
-import { usePageTitle } from '../hooks/usePageTitle';
-import { supabase } from '../lib/supabase';
+import Section from '@/components/Section';
+import { usePageTitle } from '@/hooks/usePageTitle';
+import { supabase } from '@/lib/supabase';
 
 const Preview: React.FC = () => {
   usePageTitle('Live Preview');
-  const [searchParams] = useSearchParams();
+  const searchParams = useSearchParams(); // Fixed: Next.js returns the params object directly, not an array
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image'; // Import Image
 import { usePathname } from 'next/navigation';
 import { Lock } from 'lucide-react';
 import { useData } from '@/contexts/DataContext';
@@ -11,7 +12,7 @@ const SocialIcon: React.FC<{ href: string; children: React.ReactNode }> = ({ hre
     href={href} 
     target="_blank" 
     rel="noopener noreferrer"
-    className="w-10 h-10 bg-primary text-white flex items-center justify-center hover:bg-slate-800 transition-all duration-300 rounded-none"
+    className="w-10 h-10 bg-primary text-white flex items-center justify-center hover:bg-slate-800 transition-all duration-300 rounded-none relative"
   >
     {children}
   </a>
@@ -21,7 +22,6 @@ const Footer: React.FC = () => {
   const pathname = usePathname();
   const { siteConfig } = useData();
 
-  // Don't render Footer on Admin pages
   if (pathname.startsWith('/admin')) return null;
 
   return (
@@ -48,17 +48,17 @@ const Footer: React.FC = () => {
           <h5 className="font-sans font-semibold text-primary mb-4 text-sm uppercase tracking-wider">Connect</h5>
           <div className="flex flex-wrap gap-2 mb-8">
             <SocialIcon href={`mailto:${siteConfig.email}`}>
-              <img src="/images/email.png" width="18" height="18" alt="Email"/>
+              <Image src="/images/email.png" alt="Email" width={18} height={18} />
             </SocialIcon>
             <SocialIcon href={siteConfig.social.linkedin}>
-              <img src="/images/linkedin.png" width="23" height="23" alt="LinkedIn"/>
+              <Image src="/images/linkedin.png" alt="LinkedIn" width={23} height={23} />
             </SocialIcon>
             <SocialIcon href={siteConfig.social.scholar}>
-              <img src="/images/googlescholar.png" width="18" height="18" alt="Google Scholar"/>
+              <Image src="/images/googlescholar.png" alt="Google Scholar" width={18} height={18} />
             </SocialIcon>
             {siteConfig.social.ssrn && (
               <SocialIcon href={siteConfig.social.ssrn}>
-                <img src="/images/ssrn_icon.png" width="32" height="32" alt="SSRN"/>
+                <Image src="/images/ssrn_icon.png" alt="SSRN" width={32} height={32} />
               </SocialIcon>
             )}
           </div>

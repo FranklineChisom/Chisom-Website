@@ -1,17 +1,20 @@
+'use client'; // Added Directive
+
 import React, { useState, useEffect } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
-import { useData } from '../contexts/DataContext';
-import Section from '../components/Section';
+import { useSearchParams } from 'next/navigation'; // Changed from react-router-dom
+import Link from 'next/link'; // Changed from react-router-dom
+import { useData } from '@/contexts/DataContext';
+import Section from '@/components/Section';
 import { CheckCircle, AlertCircle } from 'lucide-react';
 
 const Unsubscribe: React.FC = () => {
-  const [searchParams] = useSearchParams();
+  const searchParams = useSearchParams(); // Uses Next.js hook
   const { removeSubscriber } = useData();
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'success' | 'not-found' | 'loading'>('idle');
 
   useEffect(() => {
-    // Set page title
+    // Basic Title Setting (Alternative to metadata for Client Comps)
     document.title = 'Unsubscribe | Frankline Chisom Ebere';
     
     const emailParam = searchParams.get('email');
@@ -26,10 +29,8 @@ const Unsubscribe: React.FC = () => {
 
     setStatus('loading');
 
-    // removeSubscriber returns true if email existed and was removed, false if not found
     const success = await removeSubscriber(email);
     
-    // Wait a moment for better UX
     setTimeout(() => {
       if (success) {
         setStatus('success');
@@ -58,7 +59,7 @@ const Unsubscribe: React.FC = () => {
                 <p className="text-sm text-slate-500 mb-6">
                   We're sorry to see you go. You won't receive any more newsletters from us.
                 </p>
-                <Link to="/" className="text-primary font-medium hover:underline">Return to Home</Link>
+                <Link href="/" className="text-primary font-medium hover:underline">Return to Home</Link>
              </div>
           ) : status === 'not-found' ? (
              <div className="text-center py-6">
@@ -76,7 +77,7 @@ const Unsubscribe: React.FC = () => {
                 >
                   Try a different email
                 </button>
-                <Link to="/" className="text-slate-400 text-sm hover:text-slate-600">Return to Home</Link>
+                <Link href="/" className="text-slate-400 text-sm hover:text-slate-600">Return to Home</Link>
              </div>
           ) : status === 'loading' ? (
              <div className="text-center py-6">
@@ -109,7 +110,7 @@ const Unsubscribe: React.FC = () => {
                 Unsubscribe
               </button>
               <div className="text-center mt-4">
-                 <Link to="/" className="text-sm text-slate-400 hover:text-slate-600">Cancel and return home</Link>
+                 <Link href="/" className="text-sm text-slate-400 hover:text-slate-600">Cancel and return home</Link>
               </div>
             </form>
           )}

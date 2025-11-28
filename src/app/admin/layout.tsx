@@ -19,7 +19,8 @@ const AdminLogin = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const success = await login(password, email);
+    // FIX: Updated to match standard (email, password) signature
+    const success = await login(email, password);
     if (success) {
       router.refresh(); // Refresh to update auth state
     } else {
@@ -54,7 +55,7 @@ const AdminLogin = () => {
               required
             />
           </div>
-          {error && <p className="text-red-500 text-sm">Invalid email or password</p>}
+          {error && <p className="text-red-500 text-sm">Invalid login credentials. Please check your Supabase Auth user.</p>}
           <button type="submit" className="w-full bg-primary text-white py-2 rounded-none hover:bg-slate-800 transition-colors">
             Login
           </button>

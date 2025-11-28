@@ -1,12 +1,14 @@
+'use client'; // 1. Added directive for Client Component
+
 import React, { useState } from 'react';
-import Section from '../components/Section';
-import Pagination from '../components/Pagination';
-import SearchBar from '../components/SearchBar';
+import Link from 'next/link'; // 2. Changed from react-router-dom
 import { ArrowRight, Mail } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { useData } from '../contexts/DataContext';
-import { usePageTitle } from '../hooks/usePageTitle';
-import { useSEO } from '../hooks/usePageTitle';
+import Section from '@/components/Section';
+import Pagination from '@/components/Pagination';
+import SearchBar from '@/components/SearchBar';
+import { useData } from '@/contexts/DataContext';
+import { usePageTitle } from '@/hooks/usePageTitle';
+import { useSEO } from '@/hooks/usePageTitle';
 
 const ITEMS_PER_PAGE = 6;
 
@@ -20,11 +22,13 @@ const Newsletters: React.FC = () => {
   const { newsletters } = useData();
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Filter published, Sort by date descending
-  const sortedNewsletters = newsletters
+  // Safety check and Sort
+  const safeNewsletters = newsletters || [];
+  const sortedNewsletters = safeNewsletters
     .filter(n => n.published)
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
+  // Pagination Logic
   const totalPages = Math.ceil(sortedNewsletters.length / ITEMS_PER_PAGE);
   const currentItems = sortedNewsletters.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
@@ -61,7 +65,8 @@ const Newsletters: React.FC = () => {
           {currentItems.length > 0 ? currentItems.map((item) => (
             <article key={item.id} className="group border-b border-slate-100 pb-12 last:border-0">
               <span className="text-sm text-slate-400 font-mono block mb-2">{item.date}</span>
-              <Link to={`/newsletter/${item.slug || item.id}`}>
+              {/* 3. Updated Link to match folder structure (plural 'newsletters') */}
+              <Link href={`/newsletters/${item.slug || item.id}`}>
                 <h2 className="font-serif text-2xl text-primary font-medium mb-3 group-hover:text-accent transition-colors">
                   {item.title}
                 </h2>
@@ -69,7 +74,7 @@ const Newsletters: React.FC = () => {
               <p className="text-slate-600 leading-relaxed mb-4 max-w-3xl">
                 {item.description}
               </p>
-              <Link to={`/newsletter/${item.slug || item.id}`} className="inline-flex items-center text-sm font-bold text-slate-400 hover:text-accent uppercase tracking-wider transition-colors">
+              <Link href={`/newsletters/${item.slug || item.id}`} className="inline-flex items-center text-sm font-bold text-slate-400 hover:text-accent uppercase tracking-wider transition-colors">
                 Read Issue <ArrowRight size={14} className="ml-1 transition-transform group-hover:translate-x-1" />
               </Link>
             </article>

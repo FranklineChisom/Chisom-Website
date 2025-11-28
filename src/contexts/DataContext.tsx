@@ -1,3 +1,5 @@
+'use client'; // Ensure this directive is here
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { BlogPost, Publication, SiteConfig, Newsletter, ContactMessage, Subscriber } from '../types';
 import { SITE_CONFIG as DEFAULT_CONFIG, BLOG_POSTS as DEFAULT_POSTS, PUBLICATIONS as DEFAULT_PUBS, NEWSLETTERS as DEFAULT_NEWSLETTERS } from '../constants';
@@ -27,7 +29,7 @@ interface DataContextType {
   addSubscriber: (email: string) => Promise<boolean>;
   removeSubscriber: (email: string) => Promise<boolean>;
   isAuthenticated: boolean;
-  login: (password: string, email?: string) => Promise<boolean>;
+  login: (password: string, email: string) => Promise<boolean>;
   logout: () => void;
   isLoading: boolean;
 }
@@ -41,20 +43,30 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [newsletters, setNewsletters] = useState<Newsletter[]>([]);
   const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    return localStorage.getItem('isAuthenticated') === 'true';
-  });
+  
+  // FIX: Initialize to false. Do NOT access localStorage here.
+  // The correct state will be set by the useEffect below once the component mounts in the browser.
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(true);
 
   // Load data from Supabase on mount
   useEffect(() => {
     loadAllData();
-  }, []);
+    
+    // Check for active Supabase session on mount
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsAuthenticated(!!session);
+    };
+    checkSession();
 
-  // Persist auth state
-  useEffect(() => {
-    localStorage.setItem('isAuthenticated', String(isAuthenticated));
-  }, [isAuthenticated]);
+    // Listen for auth changes (login/logout/refresh)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const loadAllData = async () => {
     setIsLoading(true);
@@ -82,7 +94,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       .single();
 
     if (error) {
-      handleSupabaseError(error, 'Error loading site config');
+      // Don't log error for empty table on fresh setup
+      if (error.code !== 'PGRST116') {
+         handleSupabaseError(error, 'Error loading site config');
+      }
       setSiteConfig(DEFAULT_CONFIG);
       return;
     }
@@ -107,9 +122,12 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const updateSiteConfig = async (config: SiteConfig): Promise<boolean> => {
-    const { error } = await supabase
-      .from('site_config')
-      .update({
+    // Check if a row exists
+    const { data: existing } = await supabase.from('site_config').select('id').single();
+    
+    let error;
+    
+    const payload = {
         name: config.name,
         role: config.role,
         tagline: config.tagline,
@@ -124,8 +142,20 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         social: config.social,
         analytics_url: config.analyticsUrl, // Save to DB
         updated_at: new Date().toISOString()
-      })
-      .eq('id', (await supabase.from('site_config').select('id').single()).data?.id);
+    };
+
+    if (existing) {
+       const { error: updateError } = await supabase
+        .from('site_config')
+        .update(payload)
+        .eq('id', existing.id);
+       error = updateError;
+    } else {
+       const { error: insertError } = await supabase
+        .from('site_config')
+        .insert([payload]); // Insert as array
+       error = insertError;
+    }
 
     if (error) {
       handleSupabaseError(error, 'Error updating site config');
@@ -598,35 +628,25 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return true;
   };
 
-  // Authentication
-  const login = async (password: string, email?: string): Promise<boolean> => {
-    const { data, error } = await supabase
-      .from('admin_auth')
-      .select('password_hash, admin_email')
-      .single();
+  // Authentication via Supabase
+  const login = async (password: string, email: string): Promise<boolean> => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-    if (error || !data) {
+    if (error) {
       handleSupabaseError(error, 'Error authenticating');
       return false;
     }
 
-    const passwordMatch = password === data.password_hash;
-    
-    let emailMatch = true;
-    if (email && data.admin_email) {
-      emailMatch = email.toLowerCase() === data.admin_email.toLowerCase();
-    }
-
-    if (passwordMatch && emailMatch) {
-      setIsAuthenticated(true);
-      return true;
-    }
-
-    return false;
+    // Auth state changes are handled by the listener in useEffect
+    return true;
   };
 
-  const logout = () => {
-    setIsAuthenticated(false);
+  const logout = async () => {
+    await supabase.auth.signOut();
+    // Auth state changes are handled by the listener in useEffect
   };
 
   return (
