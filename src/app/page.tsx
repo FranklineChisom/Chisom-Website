@@ -1,65 +1,176 @@
-import Image from "next/image";
+import React from 'react';
+import Link from 'next/link';
+import { ArrowRight, ChevronRight, Mail } from 'lucide-react';
+import Section from '@/components/Section';
+import { supabase } from '@/lib/supabase';
+import NewsletterForm from '@/components/NewsletterForm';
 
-export default function Home() {
+// Fetch data directly on the server
+async function getData() {
+  // 1. Fetch Site Config
+  const { data: config } = await supabase.from('site_config').select('*').single();
+  
+  // 2. Fetch Latest 3 Blog Posts
+  const { data: posts } = await supabase
+    .from('blog_posts')
+    .select('*')
+    .eq('published', true)
+    .order('date', { ascending: false })
+    .limit(3);
+
+  // 3. Fetch Latest 2 Newsletters
+  const { data: newsletters } = await supabase
+    .from('newsletters')
+    .select('*')
+    .eq('published', true)
+    .order('date', { ascending: false })
+    .limit(2);
+
+  return { 
+    siteConfig: config || { focus_text: "Loading..." }, // simplified fallback
+    recentPosts: posts || [], 
+    recentNewsletters: newsletters || [] 
+  };
+}
+
+export default async function Home() {
+  const { siteConfig, recentPosts, recentNewsletters } = await getData();
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <div className="space-y-24 md:space-y-32">
+      
+      {/* Hero Section */}
+      <Section className="max-w-5xl mx-auto px-6 pt-16 md:pt-24">
+        <h1 className="font-serif text-5xl md:text-7xl text-primary leading-[1.1] font-medium mb-10 tracking-tight">
+          Law, Policy, and <br className="hidden md:block" />
+          <span className="italic text-slate-600">African Markets</span>.
+        </h1>
+        
+        <div className="max-w-2xl border-l-2 border-accent pl-8 py-2 mb-12">
+          <p className="text-lg md:text-xl text-slate-600 font-light leading-relaxed">
+            Researching the functional harmonisation of capital markets and the regulatory frameworks essential for economic integration across the continent.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        <div className="flex flex-col sm:flex-row gap-5">
+            <Link 
+              href="/research" 
+              className="inline-flex items-center justify-center px-8 py-4 bg-primary text-white font-medium hover:bg-slate-800 transition-all rounded-none group shadow-lg shadow-primary/20"
+            >
+              Explore Research
+              <ArrowRight size={18} className="ml-2 group-hover:translate-x-1 transition-transform" />
+            </Link>
+            <Link 
+              href="/about" 
+              className="inline-flex items-center justify-center px-8 py-4 bg-transparent text-slate-600 border border-slate-200 hover:border-primary hover:text-primary font-medium transition-all rounded-none"
+            >
+              About Me
+            </Link>
         </div>
-      </main>
+      </Section>
+
+      {/* Focus Section */}
+      <Section delay={200} className="bg-slate-50 py-20 border-y border-slate-100">
+        <div className="max-w-4xl mx-auto px-6">
+          <span className="text-xs font-bold tracking-widest text-slate-400 uppercase mb-4 block">Current Focus</span>
+          <h2 className="font-serif text-3xl md:text-4xl text-primary leading-snug mb-8">
+            &quot;{siteConfig.focus_text}&quot;
+          </h2>
+          <Link href="/current-focus" className="inline-flex items-center text-primary font-medium hover:text-slate-800 transition-colors border-b border-primary/30 pb-1 hover:border-primary">
+            Learn more about this project
+            <ChevronRight size={16} className="ml-1" />
+          </Link>
+        </div>
+      </Section>
+
+      {/* Recent Writing */}
+      <Section delay={300} className="max-w-4xl mx-auto px-6">
+        <div className="flex justify-between items-end mb-12">
+          <h2 className="font-serif text-3xl text-primary">From the Blog</h2>
+          <Link href="/blog" className="hidden md:inline-flex items-center text-sm text-slate-500 hover:text-primary transition-colors">
+            View all articles <ArrowRight size={16} className="ml-1" />
+          </Link>
+        </div>
+
+        <div className="grid gap-12">
+          {recentPosts.map((post) => (
+            <article key={post.id} className="group">
+              <div className="flex flex-col md:flex-row md:items-baseline gap-2 md:gap-8">
+                <span className="text-sm text-slate-400 font-mono min-w-[120px]">{post.date}</span>
+                <div>
+                  <h3 className="text-xl font-medium text-slate-800 group-hover:text-primary transition-colors mb-2">
+                    <Link href={`/blog/${post.slug || post.id}`}>{post.title}</Link>
+                  </h3>
+                  <p className="text-slate-600 leading-relaxed max-w-2xl mb-2">
+                    {post.excerpt}
+                  </p>
+                  <Link href={`/blog/${post.slug || post.id}`} className="text-sm font-medium text-slate-400 group-hover:text-primary transition-colors inline-flex items-center">
+                    Read Article <ArrowRight size={14} className="ml-1" />
+                  </Link>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+        
+        <div className="mt-10 md:hidden">
+          <Link href="/blog" className="inline-flex items-center text-sm text-slate-500 hover:text-primary">
+            View all articles <ArrowRight size={16} className="ml-1" />
+          </Link>
+        </div>
+      </Section>
+
+      {/* Newsletter Section */}
+      <Section delay={400} className="bg-primary text-white py-24 my-10">
+        <div className="max-w-5xl mx-auto px-6 grid md:grid-cols-2 gap-16">
+          <div>
+            <div className="flex items-center gap-3 text-accent mb-4">
+              <Mail size={24} />
+              <span className="text-sm font-bold tracking-widest uppercase">The Newsletter</span>
+            </div>
+            <h2 className="font-serif text-3xl md:text-4xl leading-tight mb-6">
+              Law, policy, and the economic future of Africa.
+            </h2>
+            <p className="text-slate-300 font-light leading-relaxed mb-8 text-lg">
+              Join a growing community of students, academics and practitioners. I share fresh perspectives on law, policy, and markets in Africa and explore ideas that reach far beyond.
+            </p>
+            
+            {/* Interactive Client Component */}
+            <NewsletterForm />
+            
+          </div>
+          
+          <div className="border-t md:border-t-0 md:border-l border-white/10 md:pl-16 pt-10 md:pt-0">
+            <h3 className="text-sm font-bold tracking-widest text-slate-400 uppercase mb-8">Latest Issues</h3>
+            <div className="space-y-8">
+              {recentNewsletters.map(item => (
+                <div key={item.id} className="group">
+                  <span className="text-xs font-mono text-slate-400 block mb-1">{item.date}</span>
+                  <Link href={`/newsletter/${item.slug || item.id}`} className="font-serif text-xl block mb-2 group-hover:text-accent transition-colors">
+                    {item.title}
+                  </Link>
+                  <p className="text-slate-400 text-sm leading-relaxed mb-3 line-clamp-2">
+                    {item.description}
+                  </p>
+                  <Link href={`/newsletter/${item.slug || item.id}`} className="text-xs font-bold text-accent uppercase tracking-wider flex items-center group-hover:text-white transition-colors">
+                    Read Issue <ArrowRight size={12} className="ml-1" />
+                  </Link>
+                </div>
+              ))}
+              {recentNewsletters.length === 0 && (
+                <p className="text-slate-500 italic">No issues published yet. Be the first to subscribe.</p>
+              )}
+            </div>
+            
+            <div className="mt-8 pt-6 border-t border-white/5">
+                <Link href="/newsletters" className="text-sm text-slate-300 hover:text-white transition-colors flex items-center gap-2">
+                    View Full Archive <ArrowRight size={14} />
+                </Link>
+            </div>
+          </div>
+        </div>
+      </Section>
+
     </div>
   );
 }
