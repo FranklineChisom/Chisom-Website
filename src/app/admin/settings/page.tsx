@@ -1,12 +1,14 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Save, User, Share2, Layout, BookOpen } from 'lucide-react';
+import { Save, User, Share2, Layout, BookOpen, Loader2 } from 'lucide-react';
 import { useData } from '@/contexts/DataContext';
 import { useToast } from '@/contexts/ToastContext';
 import MarkdownEditor from '@/components/MarkdownEditor';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 export default function ProfileManager() {
+    usePageTitle('Profile Settings - Admin');
     const { siteConfig, updateSiteConfig } = useData();
     const { showToast } = useToast();
     const [formData, setFormData] = useState(siteConfig);
@@ -46,7 +48,7 @@ export default function ProfileManager() {
     };
 
     return (
-        <div className="max-w-5xl pb-20">
+        <div className="max-w-5xl pb-20 animate-in fade-in duration-500">
             <div className="flex justify-between items-center mb-8">
                 <div>
                     <h2 className="text-3xl font-serif text-slate-800">Profile Settings</h2>
@@ -57,99 +59,99 @@ export default function ProfileManager() {
             <form onSubmit={handleSubmit} className="space-y-8">
                 
                 {/* General Info Card */}
-                <div className="bg-white rounded-sm shadow-sm border border-slate-200 overflow-hidden">
-                    <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center gap-2">
-                        <User size={18} className="text-primary" />
-                        <h3 className="font-medium text-slate-800">Personal Information</h3>
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200/60 overflow-hidden">
+                    <div className="bg-slate-50/50 px-8 py-5 border-b border-slate-100 flex items-center gap-3">
+                        <User size={20} className="text-primary/80" />
+                        <h3 className="font-semibold text-slate-800">Personal Information</h3>
                     </div>
-                    <div className="p-6 space-y-6">
+                    <div className="p-8 space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Full Name</label>
-                                <input type="text" required name="name" value={formData.name} onChange={handleChange} className="w-full border border-slate-200 p-2.5 text-sm focus:border-primary focus:outline-none rounded-sm bg-slate-50/50 focus:bg-white transition-colors" />
+                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Full Name</label>
+                                <input type="text" required name="name" value={formData.name} onChange={handleChange} className="w-full border border-slate-200 rounded-md p-3 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all bg-white" />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Professional Role</label>
-                                <input type="text" required name="role" value={formData.role} onChange={handleChange} className="w-full border border-slate-200 p-2.5 text-sm focus:border-primary focus:outline-none rounded-sm bg-slate-50/50 focus:bg-white transition-colors" />
+                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Professional Role</label>
+                                <input type="text" required name="role" value={formData.role} onChange={handleChange} className="w-full border border-slate-200 rounded-md p-3 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all bg-white" />
                             </div>
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Tagline</label>
-                            <textarea required name="tagline" value={formData.tagline} onChange={handleChange} rows={2} className="w-full border border-slate-200 p-2.5 text-sm focus:border-primary focus:outline-none rounded-sm bg-slate-50/50 focus:bg-white transition-colors resize-none" />
+                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Tagline</label>
+                            <textarea required name="tagline" value={formData.tagline} onChange={handleChange} rows={2} className="w-full border border-slate-200 rounded-md p-3 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all bg-white resize-none" />
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Profile Image URL</label>
-                            <input type="url" name="aboutImage" value={formData.aboutImage} onChange={handleChange} className="w-full border border-slate-200 p-2.5 text-sm focus:border-primary focus:outline-none rounded-sm bg-slate-50/50 focus:bg-white transition-colors" placeholder="https://..." />
+                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Profile Image URL</label>
+                            <input type="url" name="aboutImage" value={formData.aboutImage} onChange={handleChange} className="w-full border border-slate-200 rounded-md p-3 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all bg-white" placeholder="https://..." />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Contact Email</label>
-                                <input type="email" required name="email" value={formData.email} onChange={handleChange} className="w-full border border-slate-200 p-2.5 text-sm focus:border-primary focus:outline-none rounded-sm bg-slate-50/50 focus:bg-white transition-colors" />
+                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Contact Email</label>
+                                <input type="email" required name="email" value={formData.email} onChange={handleChange} className="w-full border border-slate-200 rounded-md p-3 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all bg-white" />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Location</label>
-                                <input type="text" name="location" value={formData.location} onChange={handleChange} className="w-full border border-slate-200 p-2.5 text-sm focus:border-primary focus:outline-none rounded-sm bg-slate-50/50 focus:bg-white transition-colors" placeholder="City, Country" />
+                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Location</label>
+                                <input type="text" name="location" value={formData.location} onChange={handleChange} className="w-full border border-slate-200 rounded-md p-3 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all bg-white" placeholder="City, Country" />
                             </div>
                         </div>
                     </div>
                 </div>
 
                 {/* Social Links Card */}
-                <div className="bg-white rounded-sm shadow-sm border border-slate-200 overflow-hidden">
-                   <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center gap-2">
-                        <Share2 size={18} className="text-primary" />
-                        <h3 className="font-medium text-slate-800">Social Presence</h3>
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200/60 overflow-hidden">
+                   <div className="bg-slate-50/50 px-8 py-5 border-b border-slate-100 flex items-center gap-3">
+                        <Share2 size={20} className="text-primary/80" />
+                        <h3 className="font-semibold text-slate-800">Social Presence</h3>
                     </div>
-                   <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                   <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
-                          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">LinkedIn URL</label>
+                          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">LinkedIn URL</label>
                           <input 
                             name="linkedin" 
                             value={formData.social.linkedin} 
                             onChange={handleSocialChange} 
-                            className="w-full border border-slate-200 p-2.5 text-sm focus:border-primary focus:outline-none rounded-sm bg-slate-50/50 focus:bg-white transition-colors" 
+                            className="w-full border border-slate-200 rounded-md p-3 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all bg-white" 
                           />
                       </div>
                       <div>
-                          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Twitter/X URL</label>
+                          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Twitter/X URL</label>
                           <input 
                             name="twitter" 
                             value={formData.social.twitter} 
                             onChange={handleSocialChange} 
-                            className="w-full border border-slate-200 p-2.5 text-sm focus:border-primary focus:outline-none rounded-sm bg-slate-50/50 focus:bg-white transition-colors" 
+                            className="w-full border border-slate-200 rounded-md p-3 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all bg-white" 
                           />
                       </div>
                       <div>
-                          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Google Scholar URL</label>
+                          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Google Scholar URL</label>
                           <input 
                             name="scholar" 
                             value={formData.social.scholar} 
                             onChange={handleSocialChange} 
-                            className="w-full border border-slate-200 p-2.5 text-sm focus:border-primary focus:outline-none rounded-sm bg-slate-50/50 focus:bg-white transition-colors" 
+                            className="w-full border border-slate-200 rounded-md p-3 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all bg-white" 
                           />
                       </div>
                       <div>
-                          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">SSRN URL</label>
+                          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">SSRN URL</label>
                           <input 
                             name="ssrn" 
                             value={formData.social.ssrn || ''} 
                             onChange={handleSocialChange} 
-                            className="w-full border border-slate-200 p-2.5 text-sm focus:border-primary focus:outline-none rounded-sm bg-slate-50/50 focus:bg-white transition-colors" 
+                            className="w-full border border-slate-200 rounded-md p-3 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all bg-white" 
                           />
                       </div>
                    </div>
                 </div>
 
                 {/* Homepage Focus Card */}
-                <div className="bg-white rounded-sm shadow-sm border border-slate-200 overflow-hidden">
-                   <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center gap-2">
-                        <Layout size={18} className="text-primary" />
-                        <h3 className="font-medium text-slate-800">Homepage & Focus</h3>
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200/60 overflow-hidden">
+                   <div className="bg-slate-50/50 px-8 py-5 border-b border-slate-100 flex items-center gap-3">
+                        <Layout size={20} className="text-primary/80" />
+                        <h3 className="font-semibold text-slate-800">Homepage & Focus</h3>
                     </div>
-                   <div className="p-6 space-y-6">
+                   <div className="p-8 space-y-6">
                        <div>
-                          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Focus Text (Short Description)</label>
-                          <textarea required name="focusText" value={formData.focusText} onChange={handleChange} rows={2} className="w-full border border-slate-200 p-2.5 text-sm focus:border-primary focus:outline-none rounded-sm bg-slate-50/50 focus:bg-white transition-colors resize-none" />
+                          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Focus Text (Short Description)</label>
+                          <textarea required name="focusText" value={formData.focusText} onChange={handleChange} rows={2} className="w-full border border-slate-200 rounded-md p-3 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all bg-white resize-none" />
                           <p className="text-xs text-slate-400 mt-1">This appears on the homepage banner.</p>
                       </div>
                       
@@ -163,20 +165,20 @@ export default function ProfileManager() {
                       </div>
 
                        <div>
-                          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Focus Link Override</label>
-                          <input type="text" name="focusLink" value={formData.focusLink || ''} onChange={handleChange} className="w-full border border-slate-200 p-2.5 text-sm focus:border-primary focus:outline-none rounded-sm bg-slate-50/50 focus:bg-white transition-colors" placeholder="/current-focus" />
+                          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Focus Link Override</label>
+                          <input type="text" name="focusLink" value={formData.focusLink || ''} onChange={handleChange} className="w-full border border-slate-200 rounded-md p-3 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all bg-white" placeholder="/current-focus" />
                           <p className="text-xs text-slate-400 mt-1">Leave blank to use default.</p>
                       </div>
                    </div>
                 </div>
                 
                 {/* Research Page Settings Card */}
-                <div className="bg-white rounded-sm shadow-sm border border-slate-200 overflow-hidden">
-                  <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center gap-2">
-                        <BookOpen size={18} className="text-primary" />
-                        <h3 className="font-medium text-slate-800">Research Page Content</h3>
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200/60 overflow-hidden">
+                  <div className="bg-slate-50/50 px-8 py-5 border-b border-slate-100 flex items-center gap-3">
+                        <BookOpen size={20} className="text-primary/80" />
+                        <h3 className="font-semibold text-slate-800">Research Page Content</h3>
                     </div>
-                  <div className="p-6 space-y-8">
+                  <div className="p-8 space-y-8">
                     <div>
                         <MarkdownEditor 
                             label="Research Page Introduction"
@@ -200,21 +202,21 @@ export default function ProfileManager() {
                 {/* Bottom Save Button */}
                  <div className="flex justify-end pt-4">
                     <button 
-                    onClick={handleSubmit}
-                    disabled={isSaving}
-                    className="bg-primary text-white px-6 py-2.5 rounded-sm hover:bg-slate-800 transition-colors flex items-center gap-2 font-medium disabled:opacity-70 shadow-sm"
-                >
-                    {isSaving ? (
-                        <>
-                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                            Saving Changes...
-                        </>
-                    ) : (
-                        <>
-                            <Save size={18} /> Save All Changes
-                        </>
-                    )}
-                </button>
+                        onClick={handleSubmit}
+                        disabled={isSaving}
+                        className="bg-primary text-white px-8 py-3 rounded-md hover:bg-slate-800 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5 flex items-center gap-2 font-medium disabled:opacity-70"
+                    >
+                        {isSaving ? (
+                            <>
+                                <Loader2 size={18} className="animate-spin" />
+                                Saving All Changes...
+                            </>
+                        ) : (
+                            <>
+                                <Save size={18} /> Save All Changes
+                            </>
+                        )}
+                    </button>
                 </div>
             </form>
         </div>

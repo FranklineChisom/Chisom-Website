@@ -3,9 +3,9 @@ import {
   X,
   Upload,
   Image as ImageIcon,
-  Check,
   Loader2,
-  Trash2
+  Trash2,
+  ChevronDown
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 
@@ -20,27 +20,37 @@ interface MediaFile {
   id: string;
 }
 
+const PAGE_SIZE = 20;
+
 const MediaLibrary: React.FC<MediaLibraryProps> = ({ onSelect, onClose }) => {
   const [images, setImages] = useState<MediaFile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Constants
-  const BUCKET_NAME = "site-assets"; // Make sure this bucket exists in Supabase
+  const BUCKET_NAME = "site-assets";
 
   useEffect(() => {
-    fetchImages();
+    fetchImages(0, true);
   }, []);
 
-  const fetchImages = async () => {
+  const fetchImages = async (pageNum: number, isInitial: boolean = false) => {
     try {
-      setLoading(true);
+      if (isInitial) setLoading(true);
+      else setLoadingMore(true);
+
+      const from = pageNum * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
+
       const { data, error } = await supabase.storage
         .from(BUCKET_NAME)
         .list("", {
-          limit: 100,
-          offset: 0,
+          limit: PAGE_SIZE,
+          offset: from,
           sortBy: { column: "created_at", order: "desc" }
         });
 
@@ -48,7 +58,7 @@ const MediaLibrary: React.FC<MediaLibraryProps> = ({ onSelect, onClose }) => {
 
       if (data) {
         const processedImages = data
-          .filter(file => file.name !== ".emptyFolderPlaceholder") // Filter out system files
+          .filter(file => file.name !== ".emptyFolderPlaceholder")
           .map(file => {
             const { data: publicUrlData } = supabase.storage
               .from(BUCKET_NAME)
@@ -60,13 +70,24 @@ const MediaLibrary: React.FC<MediaLibraryProps> = ({ onSelect, onClose }) => {
               url: publicUrlData.publicUrl
             };
           });
-        setImages(processedImages);
+
+        if (processedImages.length < PAGE_SIZE) {
+            setHasMore(false);
+        }
+
+        setImages(prev => isInitial ? processedImages : [...prev, ...processedImages]);
+        setPage(pageNum);
       }
     } catch (error) {
       console.error("Error loading images:", error);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
+  };
+
+  const handleLoadMore = () => {
+      fetchImages(page + 1);
   };
 
   const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -85,8 +106,10 @@ const MediaLibrary: React.FC<MediaLibraryProps> = ({ onSelect, onClose }) => {
 
       if (uploadError) throw uploadError;
 
-      // Refresh list
-      await fetchImages();
+      // Refresh list from start
+      setPage(0);
+      setHasMore(true);
+      await fetchImages(0, true);
     } catch (error) {
       console.error("Error uploading image:", error);
       alert("Error uploading image. Check console details.");
@@ -130,14 +153,14 @@ const MediaLibrary: React.FC<MediaLibraryProps> = ({ onSelect, onClose }) => {
             onClick={onClose}
             className="p-2 hover:bg-slate-100 rounded-full text-slate-500 transition-colors"
           >
-            <X size={20} /> Close
+            <X size={20} />
           </button>
         </div>
 
         {/* Toolbar */}
         <div className="p-4 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
           <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-            {images.length} Assets Found
+             Showing {images.length} Assets
           </div>
           <div>
             <input
@@ -164,7 +187,7 @@ const MediaLibrary: React.FC<MediaLibraryProps> = ({ onSelect, onClose }) => {
 
         {/* Grid */}
         <div className="flex-1 overflow-y-auto p-6 bg-slate-100/50">
-          {loading ? (
+          {loading && page === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-slate-400">
               <Loader2
                 size={32}
@@ -183,38 +206,53 @@ const MediaLibrary: React.FC<MediaLibraryProps> = ({ onSelect, onClose }) => {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-              {images.map(img => (
-                <div
-                  key={img.id}
-                  onClick={() => onSelect(img.url)}
-                  className="group relative aspect-square bg-white rounded-lg border border-slate-200 overflow-hidden cursor-pointer hover:border-primary hover:shadow-md transition-all"
-                >
-                  <img
-                    src={img.url}
-                    alt={img.name}
-                    className="w-full h-full object-cover"
-                  />
-                  {/* Overlay */}
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-                    <span className="bg-white text-primary px-3 py-1 rounded-full text-xs font-bold shadow-lg transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
-                      Select
-                    </span>
-                  </div>
-                  {/* Delete Button */}
-                  <button
-                    onClick={e => handleDelete(img.name, e)}
-                    className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded opacity-0 group-hover:opacity-100 hover:bg-red-600 transition-all z-10"
-                    title="Delete image"
-                  >
-                    <Trash2 size={12} />
-                  </button>
-                  <div className="absolute bottom-0 left-0 right-0 bg-white/90 p-2 text-[10px] text-slate-600 truncate font-mono border-t border-slate-100">
-                    {img.name}
-                  </div>
+            <>
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-6">
+                {images.map(img => (
+                    <div
+                    key={img.id}
+                    onClick={() => onSelect(img.url)}
+                    className="group relative aspect-square bg-white rounded-lg border border-slate-200 overflow-hidden cursor-pointer hover:border-primary hover:shadow-md transition-all"
+                    >
+                    <img
+                        src={img.url}
+                        alt={img.name}
+                        className="w-full h-full object-cover"
+                    />
+                    {/* Overlay */}
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                        <span className="bg-white text-primary px-3 py-1 rounded-full text-xs font-bold shadow-lg transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+                        Select
+                        </span>
+                    </div>
+                    {/* Delete Button */}
+                    <button
+                        onClick={e => handleDelete(img.name, e)}
+                        className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded opacity-0 group-hover:opacity-100 hover:bg-red-600 transition-all z-10"
+                        title="Delete image"
+                    >
+                        <Trash2 size={12} />
+                    </button>
+                    <div className="absolute bottom-0 left-0 right-0 bg-white/90 p-2 text-[10px] text-slate-600 truncate font-mono border-t border-slate-100">
+                        {img.name}
+                    </div>
+                    </div>
+                ))}
                 </div>
-              ))}
-            </div>
+                
+                {hasMore && (
+                    <div className="flex justify-center pb-4">
+                        <button 
+                            onClick={handleLoadMore}
+                            disabled={loadingMore}
+                            className="flex items-center gap-2 px-6 py-2 bg-white border border-slate-200 text-slate-600 rounded-full shadow-sm hover:bg-slate-50 hover:text-primary transition-colors disabled:opacity-50"
+                        >
+                            {loadingMore ? <Loader2 size={16} className="animate-spin" /> : <ChevronDown size={16} />}
+                            {loadingMore ? 'Loading...' : 'Load More'}
+                        </button>
+                    </div>
+                )}
+            </>
           )}
         </div>
       </div>

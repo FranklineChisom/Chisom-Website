@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { 
   LayoutDashboard, FileText, BookOpen, Settings, LogOut, 
-  Menu, X, Mail, Inbox, Users, BarChart2 
+  Menu, X, Mail, Inbox, Users 
 } from 'lucide-react';
 import { useData } from '@/contexts/DataContext';
 
@@ -127,7 +127,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
         <nav className="flex-1 px-4 space-y-2 mt-4">
           <AdminLink href="/admin" icon={<LayoutDashboard size={18} />} label="Overview" onClick={() => setIsSidebarOpen(false)} />
-          <AdminLink href="/admin/analytics" icon={<BarChart2 size={18} />} label="Analytics" onClick={() => setIsSidebarOpen(false)} />
+          {/* Analytics link removed as it's now part of Overview */}
           <AdminLink href="/admin/inbox" icon={<Inbox size={18} />} label="Inbox" onClick={() => setIsSidebarOpen(false)} />
           <AdminLink href="/admin/subscribers" icon={<Users size={18} />} label="Subscribers" onClick={() => setIsSidebarOpen(false)} />
           <AdminLink href="/admin/blog" icon={<FileText size={18} />} label="Articles" onClick={() => setIsSidebarOpen(false)} />

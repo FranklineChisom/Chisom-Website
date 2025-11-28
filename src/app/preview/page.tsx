@@ -62,7 +62,7 @@ const PreviewContent: React.FC = () => {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
         <Loader2 size={32} className="animate-spin text-primary mb-4" />
-        <p className="text-slate-500 font-serif">Generating preview...</p>
+        <p className="text-slate-500 font-sans">Generating preview...</p>
       </div>
     );
   }
@@ -86,7 +86,7 @@ const PreviewContent: React.FC = () => {
       {/* Floating Banner */}
       <div className="fixed bottom-6 right-6 z-[100] animate-in slide-in-from-bottom-10 fade-in duration-700">
         <div className="bg-slate-900/90 backdrop-blur-md text-white px-5 py-3 rounded-full shadow-2xl flex items-center gap-3 border border-white/10">
-            <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse"></div>
+            <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
             <div className="flex flex-col">
                 <span className="text-sm font-medium">Draft Preview</span>
             </div>
