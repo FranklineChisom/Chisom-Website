@@ -3,13 +3,19 @@
 import React, { useState } from 'react';
 import Section from '@/components/Section';
 import { useData } from '@/contexts/DataContext';
-import { usePageTitle } from '@/hooks/usePageTitle';
-import { useSEO } from '@/hooks/usePageTitle';
+// Removed redundant usePageTitle import if not used directly, or keep if needed.
+// useSEO is sufficient for setting metadata in client components if configured that way.
+import { useSEO } from '@/hooks/usePageTitle'; 
 
-// Font Awesome Imports
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEnvelope, faLocationDot, faFileLines, faCheck, faGraduationCap, faBookmark } from '@fortawesome/free-solid-svg-icons';
-import { faLinkedin } from '@fortawesome/free-brands-svg-icons';
+// FIX: Replaced missing FontAwesome imports with Lucide React (already installed)
+import { 
+  Mail, 
+  MapPin, 
+  Check, 
+  GraduationCap, 
+  Bookmark, 
+  Linkedin 
+} from 'lucide-react';
 
 const Contact: React.FC = () => {
   useSEO({
@@ -68,7 +74,8 @@ const Contact: React.FC = () => {
 
           <div className="space-y-8">
             <div className="flex items-start">
-              <FontAwesomeIcon icon={faLocationDot} className="text-accent mt-1 mr-4 w-6 h-6" />
+              {/* FIX: Using Lucide MapPin */}
+              <MapPin className="text-accent mt-1 mr-4 w-6 h-6" />
               <div>
                 <h4 className="font-medium text-primary">Location</h4>
                 <p className="text-slate-500">Based in {siteConfig.location}</p>
@@ -76,7 +83,8 @@ const Contact: React.FC = () => {
             </div>
             
             <div className="flex items-start">
-              <FontAwesomeIcon icon={faEnvelope} className="text-accent mt-1 mr-4 w-6 h-6" />
+              {/* FIX: Using Lucide Mail */}
+              <Mail className="text-accent mt-1 mr-4 w-6 h-6" />
               <div>
                 <h4 className="font-medium text-primary">Email</h4>
                 <a href={`mailto:${siteConfig.email}`} className="text-slate-500 hover:text-primary transition-colors">
@@ -89,18 +97,21 @@ const Contact: React.FC = () => {
              <div className="pt-10 grid grid-cols-2 gap-y-4">
                 <BoxIcon 
                   href={siteConfig.social.linkedin} 
-                  icon={<FontAwesomeIcon icon={faLinkedin} className="w-5 h-5" />} 
+                  /* FIX: Using Lucide Linkedin */
+                  icon={<Linkedin className="w-5 h-5" />} 
                   label="LinkedIn" 
                 />
                 <BoxIcon 
                   href={siteConfig.social.scholar} 
-                  icon={<FontAwesomeIcon icon={faGraduationCap} className="w-5 h-5" />} 
+                  /* FIX: Using Lucide GraduationCap */
+                  icon={<GraduationCap className="w-5 h-5" />} 
                   label="Google Scholar" 
                 />
                 {siteConfig.social.ssrn && (
                   <BoxIcon 
                     href={siteConfig.social.ssrn} 
-                    icon={<FontAwesomeIcon icon={faBookmark} className="w-5 h-5" />} 
+                    /* FIX: Using Lucide Bookmark */
+                    icon={<Bookmark className="w-5 h-5" />} 
                     label="SSRN" 
                   />
                 )}
@@ -113,7 +124,8 @@ const Contact: React.FC = () => {
           {status === 'success' ? (
               <div className="h-full flex flex-col items-center justify-center text-center space-y-4 animate-in fade-in duration-500">
                   <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-2">
-                      <FontAwesomeIcon icon={faCheck} className="w-8 h-8" />
+                      {/* FIX: Using Lucide Check */}
+                      <Check className="w-8 h-8" />
                   </div>
                   <h3 className="font-serif text-2xl text-primary">Message Sent</h3>
                   <p className="text-slate-600">Thank you for reaching out. I will get back to you shortly.</p>
