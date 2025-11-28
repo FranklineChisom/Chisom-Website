@@ -11,6 +11,9 @@ export const metadata: Metadata = {
   },
   description: "Junior Research Fellow at Lex Lata Centre specializing in International Financial Law, African capital markets, and AfCFTA regulatory harmonization.",
   metadataBase: new URL('https://franklinechisom.com'),
+  icons: {
+    icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230f2f38'/><text x='50%' y='58%' dominant-baseline='middle' text-anchor='middle' font-size='70' font-family='serif' fill='white'>C</text></svg>",
+  }
 };
 
 export default function RootLayout({

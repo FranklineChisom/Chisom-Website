@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { MailOpen, Trash2, CornerUpLeft, X, Clock, User, Mail, Send, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { MailOpen, Mail, Trash2, CornerUpLeft, X, Clock, User, Send, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ContactMessage } from '@/types';
 import { useData } from '@/contexts/DataContext';
 import { useToast } from '@/contexts/ToastContext';
@@ -76,6 +76,17 @@ export default function InboxManager() {
     if (success) {
         showToast('Marked as unread', 'info');
         handleCloseModal();
+    }
+  };
+
+  const handleToggleReadStatus = async (msg: ContactMessage, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent row click
+    if (msg.read) {
+        await markMessageUnread(msg.id);
+        showToast('Marked as unread', 'info');
+    } else {
+        await markMessageRead(msg.id);
+        showToast('Marked as read', 'success');
     }
   };
 
@@ -155,7 +166,7 @@ export default function InboxManager() {
                 <th className="p-4 w-1/4">Sender</th>
                 <th className="p-4 w-1/3">Subject</th>
                 <th className="p-4 w-32">Date</th>
-                <th className="p-4 w-20 text-right">Action</th>
+                <th className="p-4 w-28 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-sm">
@@ -181,10 +192,17 @@ export default function InboxManager() {
                       <span className="text-slate-400 font-normal text-xs ml-2">- {msg.message.substring(0, 30)}...</span>
                     </td>
                     <td className="p-4 text-slate-500 font-mono text-xs">{msg.date}</td>
-                    <td className="p-4 text-right">
+                    <td className="p-4 text-right flex items-center justify-end gap-2">
+                      <button
+                        onClick={(e) => handleToggleReadStatus(msg, e)}
+                        className="p-1 text-slate-400 hover:text-primary hover:bg-slate-100 rounded transition-colors"
+                        title={msg.read ? "Mark as unread" : "Mark as read"}
+                      >
+                         {msg.read ? <Mail size={16} /> : <MailOpen size={16} />}
+                      </button>
                       <button 
                         onClick={(e) => handleDelete(msg.id, e)}
-                        className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded transition-colors opacity-0 group-hover:opacity-100"
+                        className="p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
                         title="Delete"
                       >
                         <Trash2 size={16} />

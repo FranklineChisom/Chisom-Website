@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Copy, Trash2, Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useData } from '@/contexts/DataContext';
 import { useToast } from '@/contexts/ToastContext';
@@ -44,8 +44,13 @@ export default function SubscriberManager() {
     const [copyStatus, setCopyStatus] = useState<'idle' | 'copied'>('idle');
     const ITEMS_PER_PAGE = 20;
 
-    const emailList = subscribers.map(s => s.email).join(', ');
-    const paginatedSubs = subscribers.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
+    // Sort subscribers alphabetically by email
+    const sortedSubscribers = useMemo(() => {
+        return [...subscribers].sort((a, b) => a.email.localeCompare(b.email));
+    }, [subscribers]);
+
+    const emailList = sortedSubscribers.map(s => s.email).join(', ');
+    const paginatedSubs = sortedSubscribers.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
 
     const handleCopy = () => {
       if (!emailList) return;
