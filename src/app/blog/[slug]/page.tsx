@@ -5,30 +5,76 @@ import ReactMarkdown from 'react-markdown';
 import Section from '@/components/Section';
 import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
+import { BLOG_POSTS } from '@/constants';
+import { BlogPost } from '@/types';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
-// Ensure data is revalidated every 60 seconds (prevents stale static pages)
+// Ensure data is revalidated every 60 seconds
 export const revalidate = 60;
 
 interface Props {
-  params: Promise<{ slug: string }>; // Updated: params is now a Promise
+  params: Promise<{ slug: string }>;
 }
 
-// 1. Generate Metadata
-export async function generateMetadata(props: Props): Promise<Metadata> {
-  const params = await props.params; // Await the params
-  
-  const { data: post } = await supabase
+// Fetch Data Helper
+async function getBlogPost(slug: string): Promise<BlogPost | null> {
+  // 1. Try Database
+  const { data, error } = await supabase
     .from('blog_posts')
     .select('*')
-    .eq('slug', params.slug)
+    .eq('slug', slug)
     .single();
 
-  if (!post) {
+  if (data) {
     return {
-      title: 'Post Not Found',
+      id: data.id,
+      slug: data.slug,
+      title: data.title,
+      date: data.date,
+      category: data.category,
+      readTime: data.read_time,
+      excerpt: data.excerpt,
+      content: data.content,
+      coverImage: data.cover_image,
+      published: data.published
     };
+  }
+
+  // 2. Try ID fallback for DB
+  const { data: dataById } = await supabase
+    .from('blog_posts')
+    .select('*')
+    .eq('id', slug)
+    .single();
+
+  if (dataById) {
+      return {
+      id: dataById.id,
+      slug: dataById.slug,
+      title: dataById.title,
+      date: dataById.date,
+      category: dataById.category,
+      readTime: dataById.read_time,
+      excerpt: dataById.excerpt,
+      content: dataById.content,
+      coverImage: dataById.cover_image,
+      published: dataById.published
+    };
+  }
+
+  // 3. Fallback to Constants
+  const constantPost = BLOG_POSTS.find(p => p.slug === slug || p.id === slug);
+  return constantPost || null;
+}
+
+// Generate Metadata
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const params = await props.params;
+  const post = await getBlogPost(params.slug);
+
+  if (!post) {
+    return { title: 'Post Not Found' };
   }
 
   return {
@@ -37,7 +83,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     openGraph: {
       title: post.title,
       description: post.excerpt,
-      images: post.cover_image ? [{ url: post.cover_image }] : [],
+      images: post.coverImage ? [{ url: post.coverImage }] : [],
       type: 'article',
       publishedTime: post.date,
       authors: ['Frankline Chisom Ebere'],
@@ -45,27 +91,9 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   };
 }
 
-// 2. Fetch Data
-async function getBlogPost(slug: string) {
-  if (!slug) return null;
-  
-  const { data, error } = await supabase
-    .from('blog_posts')
-    .select('*')
-    .eq('slug', slug)
-    .single();
-
-  if (error) {
-    console.error(`Supabase fetch error for slug "${slug}":`, error.message);
-    return null;
-  }
-  
-  return data;
-}
-
-// 3. Page Component
-export default async function BlogPost(props: Props) {
-  const params = await props.params; // Await the params here too
+// Page Component
+export default async function BlogPostPage(props: Props) {
+  const params = await props.params;
   const post = await getBlogPost(params.slug);
 
   if (!post) {
@@ -84,25 +112,24 @@ export default async function BlogPost(props: Props) {
                 <Calendar size={14} /> {post.date}
             </span>
             <span className="flex items-center gap-2">
-                <Clock size={14} /> {post.read_time}
+                <Clock size={14} /> {post.readTime}
             </span>
             <span className="text-accent font-semibold uppercase tracking-wider px-2 py-0.5 border border-slate-100 rounded">
                 {post.category}
             </span>
         </div>
 
-        <h1 className="font-serif text-3xl md:text-5xl text-primary leading-tight mb-8">
+        <h1 className="font-serif text-3xl md:text-5xl text-primary leading-tight mb-8 font-normal">
           {post.title}
         </h1>
 
-        {post.cover_image && (
-          <div className="mb-10 relative w-full h-[300px] md:h-[500px]">
-            <Image 
-              src={post.cover_image} 
+        {post.coverImage && (
+          <div className="mb-10 relative w-full h-auto">
+            {/* Using standard img tag for reliability with external URLs during migration, can be optimized later */}
+            <img 
+              src={post.coverImage} 
               alt={post.title}
-              fill
-              className="object-cover rounded-sm shadow-sm"
-              priority
+              className="w-full h-auto object-cover max-h-[500px] rounded-none shadow-sm"
             />
           </div>
         )}

@@ -4,33 +4,72 @@ import { ArrowRight, ChevronRight, Mail } from 'lucide-react';
 import Section from '@/components/Section';
 import { supabase } from '@/lib/supabase';
 import NewsletterForm from '@/components/NewsletterForm';
+import { SITE_CONFIG, BLOG_POSTS, NEWSLETTERS } from '@/constants';
+import { BlogPost, Newsletter, SiteConfig } from '@/types';
 
-// Fetch data directly on the server
+// Fetch data with fallback to constants (Visual Parity Assurance)
 async function getData() {
   // 1. Fetch Site Config
-  const { data: config } = await supabase.from('site_config').select('*').single();
+  const { data: dbConfig } = await supabase.from('site_config').select('*').single();
   
+  // Map DB (snake_case) to App (camelCase) or use Constant
+  const siteConfig: SiteConfig = dbConfig ? {
+    name: dbConfig.name,
+    role: dbConfig.role,
+    tagline: dbConfig.tagline,
+    focusText: dbConfig.focus_text,
+    focusLink: dbConfig.focus_link,
+    focusContent: dbConfig.focus_content,
+    researchIntro: dbConfig.research_intro,
+    researchInterests: dbConfig.research_interests,
+    aboutImage: dbConfig.about_image,
+    email: dbConfig.email,
+    location: dbConfig.location,
+    social: dbConfig.social,
+    analyticsUrl: dbConfig.analytics_url
+  } : SITE_CONFIG;
+
   // 2. Fetch Latest 3 Blog Posts
-  const { data: posts } = await supabase
+  const { data: dbPosts } = await supabase
     .from('blog_posts')
     .select('*')
     .eq('published', true)
     .order('date', { ascending: false })
     .limit(3);
+    
+  const recentPosts: BlogPost[] = dbPosts ? dbPosts.map((p: any) => ({
+    id: p.id,
+    slug: p.slug,
+    title: p.title,
+    date: p.date,
+    excerpt: p.excerpt,
+    content: p.content,
+    category: p.category,
+    readTime: p.read_time,
+    coverImage: p.cover_image,
+    published: p.published
+  })) : BLOG_POSTS.slice(0, 3);
 
   // 3. Fetch Latest 2 Newsletters
-  const { data: newsletters } = await supabase
+  const { data: dbNewsletters } = await supabase
     .from('newsletters')
     .select('*')
     .eq('published', true)
     .order('date', { ascending: false })
     .limit(2);
 
-  return { 
-    siteConfig: config || { focus_text: "Loading..." }, // simplified fallback
-    recentPosts: posts || [], 
-    recentNewsletters: newsletters || [] 
-  };
+  const recentNewsletters: Newsletter[] = dbNewsletters ? dbNewsletters.map((n: any) => ({
+    id: n.id,
+    slug: n.slug,
+    title: n.title,
+    date: n.date,
+    description: n.description,
+    content: n.content,
+    coverImage: n.cover_image,
+    published: n.published
+  })) : NEWSLETTERS.slice(0, 2);
+
+  return { siteConfig, recentPosts, recentNewsletters };
 }
 
 export default async function Home() {
@@ -41,7 +80,7 @@ export default async function Home() {
       
       {/* Hero Section */}
       <Section className="max-w-5xl mx-auto px-6 pt-16 md:pt-24">
-        <h1 className="font-serif text-5xl md:text-7xl text-primary leading-[1.1] font-medium mb-10 tracking-tight">
+        <h1 className="font-serif text-5xl md:text-7xl text-primary leading-[1.1] font-normal mb-10 tracking-tight">
           Law, Policy, and <br className="hidden md:block" />
           <span className="italic text-slate-600">African Markets</span>.
         </h1>
@@ -70,11 +109,11 @@ export default async function Home() {
       </Section>
 
       {/* Focus Section */}
-      <Section delay={200} className="bg-slate-50 py-20 border-y border-slate-100">
+      <Section delay={200} className="bg-secondary py-20 border-y border-slate-100">
         <div className="max-w-4xl mx-auto px-6">
           <span className="text-xs font-bold tracking-widest text-slate-400 uppercase mb-4 block">Current Focus</span>
           <h2 className="font-serif text-3xl md:text-4xl text-primary leading-snug mb-8">
-            &quot;{siteConfig.focus_text}&quot;
+            &quot;{siteConfig.focusText}&quot;
           </h2>
           <Link href="/current-focus" className="inline-flex items-center text-primary font-medium hover:text-slate-800 transition-colors border-b border-primary/30 pb-1 hover:border-primary">
             Learn more about this project
@@ -146,13 +185,13 @@ export default async function Home() {
               {recentNewsletters.map(item => (
                 <div key={item.id} className="group">
                   <span className="text-xs font-mono text-slate-400 block mb-1">{item.date}</span>
-                  <Link href={`/newsletter/${item.slug || item.id}`} className="font-serif text-xl block mb-2 group-hover:text-accent transition-colors">
+                  <Link href={`/newsletters/${item.slug || item.id}`} className="font-serif text-xl block mb-2 group-hover:text-accent transition-colors">
                     {item.title}
                   </Link>
                   <p className="text-slate-400 text-sm leading-relaxed mb-3 line-clamp-2">
                     {item.description}
                   </p>
-                  <Link href={`/newsletter/${item.slug || item.id}`} className="text-xs font-bold text-accent uppercase tracking-wider flex items-center group-hover:text-white transition-colors">
+                  <Link href={`/newsletters/${item.slug || item.id}`} className="text-xs font-bold text-accent uppercase tracking-wider flex items-center group-hover:text-white transition-colors">
                     Read Issue <ArrowRight size={12} className="ml-1" />
                   </Link>
                 </div>
@@ -162,6 +201,7 @@ export default async function Home() {
               )}
             </div>
             
+            {/* Added missing Archive Link check to match Vite logic more closely, though mostly stylistic preference here */}
             <div className="mt-8 pt-6 border-t border-white/5">
                 <Link href="/newsletters" className="text-sm text-slate-300 hover:text-white transition-colors flex items-center gap-2">
                     View Full Archive <ArrowRight size={14} />

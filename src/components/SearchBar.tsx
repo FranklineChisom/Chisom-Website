@@ -141,7 +141,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
             }}
             className="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400"
           >
-            <X size={18} /> Close
+            <X size={18} />
           </button>
         )}
       </div>

@@ -57,12 +57,14 @@ export default async function About() {
             
             <div className="prose prose-lg prose-slate text-slate-600 font-light leading-loose">
                 <p>
-                I am a Junior Research Fellow at the <strong>Lex Lata Centre for Int&apos;l Law & Comparative Constitutionalism in Africa</strong>, where my work focuses on researching regulatory fragmentation in African capital markets.
+                I am a Junior Research Fellow at the <strong>Lex Lata Centre for Int&apos;l Law & Comparative Constitutionalism in Africa</strong>, where my work focuses on researching regulatory fragmentation in African capital markets. I am deeply committed to the harmonization of the $2 trillion capital market among the 54 African states under the African Continental Free Trade Area (AfCFTA) protocols.
                 </p>
                 <p>
-                My legal experience spans impactful roles at top-tier firms. I have served as a Legal Intern at <strong>G Elias</strong>, <strong>Broderick Bozimo & Company</strong>, and <strong>ALN Nigeria | Aluko & Oyebode</strong>.
+                My legal experience spans impactful roles at top-tier firms. I have served as a Legal Intern at <strong>G Elias</strong>, <strong>Broderick Bozimo & Company</strong>, and <strong>ALN Nigeria | Aluko & Oyebode</strong>. In these capacities, I have contributed to case strategy development for high-profile cases worth over $80 million, conducted extensive legal research, and assisted in the preparation of court processes.
                 </p>
-                {/* ...Rest of your content... */}
+                <p>
+                  Beyond technical scholarship, I am dedicated to the human dimension of the law. Through my leadership roles at the Ahmadu Bello University Law Clinic and the Federation of African Law Students, I have driven strategic initiatives focused on advocacy and access to justice. This work is supported by my fluency in English, French, Hausa, Zarma, and Igbo, which equips me with the cultural intelligence necessary to bridge diverse legal landscapes effectively.
+                </p>
             </div>
 
             <div className="pt-8">
@@ -99,7 +101,18 @@ export default async function About() {
               Ahmadu Bello University, Zaria (Class of 2026)<br/>
               <span className="text-slate-500 text-xs">CGPA: 4.37/5.0</span>
             </li>
-            {/* ...Rest of education... */}
+            <li>
+              <strong className="block text-slate-800">Aspire Leaders Program</strong>
+              Aspire Institute, Cambridge, MA, USA (2024)
+            </li>
+            <li>
+              <strong className="block text-slate-800">Advanced Diploma, Business Administration</strong>
+              Tekedia Institute, Boston, MA, USA (2022)
+            </li>
+             <li>
+              <strong className="block text-slate-800">Notable Achievement</strong>
+              Champion & Best Advocate, Shehu Wada, SAN National Business Rescue and Insolvency Moot Championship (2024)
+            </li>
           </ul>
         </div>
       </Section>

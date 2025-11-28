@@ -2,45 +2,100 @@
 
 import React, { useState } from 'react';
 import { ExternalLink } from 'lucide-react';
-import { useData } from '@/contexts/DataContext'; // Import the context hook
+import { useData } from '@/contexts/DataContext';
 import Pagination from '@/components/Pagination';
-import Section from '@/components/Section'; // Optional wrapper for consistency
+import SearchBar from '@/components/SearchBar';
+import Section from '@/components/Section';
 import { usePageTitle } from '@/hooks/usePageTitle';
 
 const ITEMS_PER_PAGE = 8;
 
 export default function ResearchPage() {
-  usePageTitle('Research');
-  const { publications } = useData(); // Fetch data from context
+  usePageTitle('Research & Publications');
+  const { publications } = useData();
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Safety check: Ensure publications is an array (defaults to [] in context, but good practice)
+  // Safety check: Ensure publications is an array
   const safePublications = publications || [];
+  
+  // Filter published
+  const publishedPubs = safePublications.filter(p => p.published);
 
-  // Pagination Logic
-  const totalPages = Math.ceil(safePublications.length / ITEMS_PER_PAGE);
-  const currentPubs = safePublications.slice(
+  const featuredPubs = publishedPubs.filter(p => p.featured);
+  const otherPubs = publishedPubs.filter(p => !p.featured);
+
+  // Pagination Logic for other publications
+  const totalPages = Math.ceil(otherPubs.length / ITEMS_PER_PAGE);
+  const currentOtherPubs = otherPubs.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Scroll to the list section
+    const listElement = document.getElementById('publication-list');
+    if (listElement) {
+        listElement.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-6 pt-8 pb-20">
+    <div className="max-w-4xl mx-auto px-6 space-y-24">
+      
+      {/* Intro */}
       <Section>
-        <h1 className="font-serif text-4xl md:text-5xl text-primary mb-8">Research</h1>
-        <p className="text-xl text-slate-600 font-light leading-relaxed max-w-2xl mb-12">
-          Selected publications, book chapters, and policy papers.
+        <h1 className="font-serif text-4xl md:text-5xl text-primary mb-8">Research & Publications</h1>
+        <p className="text-xl text-slate-600 font-light leading-relaxed max-w-3xl mb-8">
+          My research philosophy centers on adaptive jurisprudence, examining how legal frameworks must evolve to meet the fluid demands of digital innovation, economic integration, and social justice without compromising the stability of the rule of law.
         </p>
 
-        <h2 className="text-xs font-bold tracking-widest text-slate-400 uppercase mb-8">Publications List</h2>
-        
+        {/* Search Bar - Scoped to Publications */}
+        <SearchBar 
+          publications={publishedPubs} 
+          scope="publication"
+          placeholder="Search publications..."
+        />
+      </Section>
+
+      {/* Featured Works */}
+      <Section delay={100}>
+        <h2 className="text-xs font-bold tracking-widest text-slate-400 uppercase mb-8">Featured Works</h2>
+        <div className="grid gap-8">
+          {featuredPubs.length > 0 ? featuredPubs.map((pub) => (
+            <div key={pub.id} className="bg-slate-50 p-8 rounded-none border border-slate-100 hover:border-slate-200 transition-colors">
+              <div className="flex justify-between items-start mb-4">
+                <span className="text-accent font-serif italic">{pub.venue}, {pub.year}</span>
+                <span className="text-xs font-bold text-slate-400 border border-slate-200 px-2 py-1 rounded-none">{pub.type}</span>
+              </div>
+              <h3 className="font-serif text-2xl text-primary mb-4">{pub.title}</h3>
+              <p className="text-slate-600 mb-6 leading-relaxed text-sm md:text-base">
+                {pub.abstract}
+              </p>
+              <div className="flex items-center gap-4">
+                {pub.link && (
+                    <a href={pub.link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center text-sm font-medium text-primary hover:underline">
+                    Read Publication <ExternalLink size={14} className="ml-1" />
+                    </a>
+                )}
+                {pub.coAuthors && pub.coAuthors.length > 0 && (
+                    <span className="text-sm text-slate-400">
+                        Co-authored with {pub.coAuthors.join(", ")}
+                    </span>
+                )}
+              </div>
+            </div>
+          )) : (
+            <p className="text-slate-500 italic">No featured publications yet.</p>
+          )}
+        </div>
+      </Section>
+
+      {/* List of Publications */}
+      <Section delay={200} id="publication-list">
+        <h2 className="text-xs font-bold tracking-widest text-slate-400 uppercase mb-8">Selected Publications</h2>
         <div className="space-y-8">
-          {currentPubs.length > 0 ? currentPubs.map((pub) => (
+          {currentOtherPubs.length > 0 ? currentOtherPubs.map((pub) => (
             <div key={pub.id} className="group border-l-2 border-transparent hover:border-primary pl-4 transition-all">
               {pub.link ? (
                 <a href={pub.link} target="_blank" rel="noopener noreferrer" className="block group-hover:opacity-80 transition-opacity">
@@ -57,11 +112,10 @@ export default function ResearchPage() {
                 <span>{pub.year}</span>
                 <span>•</span>
                 <span className="italic font-serif">{pub.venue}</span>
-                {pub.type && <span className="bg-slate-100 px-2 py-0.5 rounded text-xs ml-2">{pub.type}</span>}
               </div>
             </div>
           )) : (
-            <p className="text-slate-500 italic">No publications found.</p>
+            <p className="text-slate-500 italic">No other publications listed.</p>
           )}
         </div>
         
@@ -71,6 +125,29 @@ export default function ResearchPage() {
           onPageChange={handlePageChange} 
         />
       </Section>
+
+      {/* Interests */}
+      <Section delay={300} className="bg-primary text-white p-10 rounded-none">
+        <h3 className="font-serif text-2xl mb-4">Research Interests</h3>
+        <p className="text-slate-300 font-light leading-relaxed mb-4">
+          I am actively exploring research collaborations and academic dialogue in the areas of:
+        </p>
+        <ul className="space-y-3">
+            <li className="flex items-start">
+                <span className="inline-block w-1.5 h-1.5 bg-accent mt-2.5 mr-3 flex-shrink-0"></span>
+                <span className="text-white">International Financial Law: Investigating capital market harmonisation and economic integration under the AfCFTA.</span>
+            </li>
+            <li className="flex items-start">
+                <span className="inline-block w-1.5 h-1.5 bg-accent mt-2.5 mr-3 flex-shrink-0"></span>
+                <span className="text-white">Law & Technology: Analysing regulatory frameworks for the digital economy, including AI, NFTs, and data privacy.</span>
+            </li>
+            <li className="flex items-start">
+                <span className="inline-block w-1.5 h-1.5 bg-accent mt-2.5 mr-3 flex-shrink-0"></span>
+                <span className="text-white">Dispute Resolution: Examining the evolution of international arbitration standards and comparative procedural mechanisms.</span>
+            </li>
+        </ul>
+      </Section>
+
     </div>
   );
 }

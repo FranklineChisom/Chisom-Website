@@ -15,9 +15,9 @@ const config: Config = {
         accent: '#d4af37',
       },
       fontFamily: {
-        // These variables correspond to the fonts set up in layout.tsx
-        sans: ['var(--font-inter)'],
-        serif: ['var(--font-playfair)'],
+        // Direct font family names to match Google Fonts import
+        sans: ['Inter', 'sans-serif'],
+        serif: ['Playfair Display', 'serif'],
       },
     },
   },

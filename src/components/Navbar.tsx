@@ -159,7 +159,7 @@ const Navbar: React.FC = () => {
                   onClick={() => setIsSearchOpen(false)}
                   className="text-slate-400 hover:text-slate-600"
                 >
-                  <X size={20} /> Close
+                  <X size={20} />
                 </button>
               </div>
               <SearchBar
