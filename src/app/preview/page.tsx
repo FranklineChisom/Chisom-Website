@@ -1,16 +1,18 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation'; // Changed from react-router-dom
-import { ArrowLeft, Calendar, Clock, Mail, Eye, Loader2 } from 'lucide-react';
+import React, { useEffect, useState, Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { ArrowLeft, Calendar, Clock, Mail, Loader2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
-import Section from '@/components/Section';
-import { usePageTitle } from '@/hooks/usePageTitle';
-import { supabase } from '@/lib/supabase';
+import Section from '../components/Section';
+import { usePageTitle } from '../hooks/usePageTitle';
+import { supabase } from '../lib/supabase';
 
-const Preview: React.FC = () => {
+// 1. Create the inner component that uses useSearchParams
+const PreviewContent: React.FC = () => {
   usePageTitle('Live Preview');
-  const searchParams = useSearchParams(); // Fixed: Next.js returns the params object directly, not an array
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
@@ -81,7 +83,7 @@ const Preview: React.FC = () => {
   }
 
   return (
-    <div className="relative bg-white min-h-screen">
+    <>
       {/* Improved Floating Banner */}
       <div className="fixed bottom-6 right-6 z-[100] animate-in slide-in-from-bottom-10 fade-in duration-700">
         <div className="bg-slate-900/90 backdrop-blur-md text-white px-5 py-3 rounded-full shadow-2xl flex items-center gap-3 border border-white/10">
@@ -160,8 +162,24 @@ const Preview: React.FC = () => {
           </div>
         </Section>
       </div>
+    </>
+  );
+};
+
+// 2. Export the parent component with Suspense
+const PreviewPage: React.FC = () => {
+  return (
+    <div className="relative bg-white min-h-screen">
+      <Suspense fallback={
+        <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
+          <Loader2 size={32} className="animate-spin text-primary mb-4" />
+          <p className="text-slate-500 font-serif">Loading preview...</p>
+        </div>
+      }>
+        <PreviewContent />
+      </Suspense>
     </div>
   );
 };
 
-export default Preview;
+export default PreviewPage;
