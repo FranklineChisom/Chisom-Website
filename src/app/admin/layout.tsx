@@ -22,7 +22,8 @@ const AdminLogin = () => {
     // Calling login with email, password to match DataContext signature
     const success = await login(email, password);
     if (success) {
-      router.refresh(); // Refresh server components to reflect authenticated state if needed
+      router.refresh(); // Refresh to update auth state
+      router.push('/admin'); // Redirect to the main admin page (Overview)
     } else {
       setError(true);
     }
@@ -68,10 +69,6 @@ const AdminLogin = () => {
 // --- Nav Helper ---
 const AdminLink = ({ href, icon, label, onClick }: { href: string; icon: React.ReactNode; label: string; onClick?: () => void }) => {
   const pathname = usePathname();
-  
-  // Logic to match Vite's behavior:
-  // - exact match for root '/admin' (Overview)
-  // - prefix match for sub-pages (e.g. '/admin/blog')
   const isActive = href === '/admin' 
     ? (pathname === '/admin' || pathname === '/admin/') 
     : pathname.startsWith(href);
