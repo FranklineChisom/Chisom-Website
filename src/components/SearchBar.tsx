@@ -17,6 +17,7 @@ interface SearchBarProps {
   newsletters?: Newsletter[];
   placeholder?: string;
   scope?: "all" | "blog" | "publication" | "newsletter";
+  onRequestClose?: () => void;
 }
 
 const SearchBar: React.FC<SearchBarProps> = ({
@@ -24,7 +25,8 @@ const SearchBar: React.FC<SearchBarProps> = ({
   publications = [],
   newsletters = [],
   placeholder = "Search...",
-  scope = "all"
+  scope = "all",
+  onRequestClose
 }) => {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -45,6 +47,27 @@ const SearchBar: React.FC<SearchBarProps> = ({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Handle ESC key for focus management and closing
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault(); 
+        
+        if (document.activeElement === inputRef.current) {
+          // First ESC: Defocus input
+          inputRef.current?.blur();
+          setIsOpen(false); // Also close the results dropdown
+        } else if (onRequestClose) {
+          // Second ESC: Close the search modal/bar
+          onRequestClose();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [onRequestClose]);
 
   const performSearch = (searchQuery: string) => {
     if (!searchQuery.trim()) {
@@ -132,14 +155,17 @@ const SearchBar: React.FC<SearchBarProps> = ({
           onFocus={() => setIsOpen(true)}
           placeholder={placeholder}
           className="w-full pl-12 pr-12 py-3 border border-slate-200 rounded-none focus:outline-none focus:border-primary transition-colors text-slate-800 bg-white"
+          autoFocus 
         />
         {query && (
           <button
             onClick={() => {
               setQuery("");
               setResults([]);
+              inputRef.current?.focus();
             }}
             className="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400"
+            title="Clear search"
           >
             <X size={18} />
           </button>
@@ -158,6 +184,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
                       <Link
                         href={`/blog/${item.slug}`}
                         className="block px-6 py-4 hover:bg-slate-50 border-b border-slate-100"
+                        onClick={onRequestClose}
                       >
                         <div className="flex items-center gap-2 mb-1">
                           <span className="text-[10px] font-bold uppercase text-accent bg-accent/10 px-1.5 py-0.5">
@@ -178,8 +205,9 @@ const SearchBar: React.FC<SearchBarProps> = ({
                   return (
                     <li key={`news-${item.id}`}>
                       <Link
-                        href={`/newsletter/${item.slug}`}
+                        href={`/newsletters/${item.slug}`}
                         className="block px-6 py-4 hover:bg-slate-50 border-b border-slate-100"
+                        onClick={onRequestClose}
                       >
                         <div className="flex items-center gap-2 mb-1">
                           <span className="text-[10px] font-bold uppercase text-green-600 bg-green-50 px-1.5 py-0.5">

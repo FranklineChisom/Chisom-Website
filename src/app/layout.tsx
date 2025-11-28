@@ -7,7 +7,7 @@ import ClientLayout from "@/components/ClientLayout";
 export const metadata: Metadata = {
   title: {
     template: '%s | Frankline Chisom Ebere',
-    default: 'Frankline Chisom Ebere - Legal Scholar',
+    default: 'Frankline Chisom Ebere',
   },
   description: "Junior Research Fellow at Lex Lata Centre specializing in International Financial Law, African capital markets, and AfCFTA regulatory harmonization.",
   metadataBase: new URL('https://franklinechisom.com'),
@@ -19,7 +19,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className="scroll-smooth">
       <head>
         {/* Fonts fetched directly from Google Fonts to match Vite version exactly */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />

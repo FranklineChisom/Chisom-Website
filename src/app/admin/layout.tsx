@@ -120,10 +120,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <aside className={`
         w-64 bg-primary text-slate-400 flex flex-col fixed h-full z-10 transition-transform duration-300
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0
-        md:pt-0
+        pt-16 md:pt-0
       `}>
         <div className="p-6 hidden md:block">
-          <div className="text-white font-serif text-xl font-bold">Frankline Chisom</div>
+          <Link href="/" className="text-white font-serif text-xl font-bold hover:text-accent transition-colors">
+            Frankline Chisom
+          </Link>
           <div className="text-xs uppercase tracking-widest mt-1 opacity-50">Admin Console</div>
         </div>
         <nav className="flex-1 px-4 space-y-2 mt-4">

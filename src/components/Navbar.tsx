@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, Search as SearchIcon } from "lucide-react";
+import { Menu, X, Search as SearchIcon, LayoutDashboard } from "lucide-react";
 import { useData } from "@/contexts/DataContext";
 import SearchBar from "@/components/SearchBar";
 
@@ -41,12 +41,15 @@ const Navbar: React.FC = () => {
   // Safe data access
   let blogPosts: any = [],
     publications: any = [],
-    newsletters: any = [];
+    newsletters: any = [],
+    isAuthenticated = false;
+    
   try {
     const data = useData();
     blogPosts = data.blogPosts;
     publications = data.publications;
     newsletters = data.newsletters;
+    isAuthenticated = data.isAuthenticated;
   } catch (e) {
     // Fail silently during initial render or if context missing
   }
@@ -101,6 +104,15 @@ const Navbar: React.FC = () => {
             <NavLink href="/blog">Blog</NavLink>
             <NavLink href="/contact">Contact</NavLink>
 
+            {isAuthenticated && (
+              <Link 
+                href="/admin"
+                className="flex items-center gap-2 text-sm font-medium text-accent hover:text-primary transition-colors bg-accent/10 px-3 py-1.5 rounded-full"
+              >
+                <LayoutDashboard size={16} /> Admin
+              </Link>
+            )}
+
             <button
               onClick={() => setIsSearchOpen(!isSearchOpen)}
               className="text-slate-500 hover:text-primary transition-colors p-2"
@@ -137,6 +149,14 @@ const Navbar: React.FC = () => {
             <NavLink href="/research">Research</NavLink>
             <NavLink href="/blog">Blog</NavLink>
             <NavLink href="/contact">Contact</NavLink>
+            {isAuthenticated && (
+               <Link 
+                 href="/admin" 
+                 className="text-sm font-medium text-accent hover:text-primary flex items-center gap-2 pt-2 border-t border-slate-100"
+               >
+                 <LayoutDashboard size={16} /> Admin Dashboard
+               </Link>
+            )}
           </div>
         )}
       </header>
@@ -167,6 +187,7 @@ const Navbar: React.FC = () => {
                 publications={publications}
                 newsletters={newsletters}
                 placeholder="Search articles, publications, and newsletters..."
+                onRequestClose={() => setIsSearchOpen(false)}
               />
             </div>
           </div>
