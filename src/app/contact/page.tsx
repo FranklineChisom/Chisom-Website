@@ -3,19 +3,12 @@
 import React, { useState } from 'react';
 import Section from '@/components/Section';
 import { useData } from '@/contexts/DataContext';
-// Removed redundant usePageTitle import if not used directly, or keep if needed.
-// useSEO is sufficient for setting metadata in client components if configured that way.
-import { useSEO } from '@/hooks/usePageTitle'; 
+import { useSEO } from '@/hooks/useSEO';
 
-// FIX: Replaced missing FontAwesome imports with Lucide React (already installed)
-import { 
-  Mail, 
-  MapPin, 
-  Check, 
-  GraduationCap, 
-  Bookmark, 
-  Linkedin 
-} from 'lucide-react';
+// Font Awesome Imports
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEnvelope, faLocationDot, faCheck, faGraduationCap, faBookmark } from '@fortawesome/free-solid-svg-icons';
+import { faLinkedin } from '@fortawesome/free-brands-svg-icons';
 
 const Contact: React.FC = () => {
   useSEO({
@@ -67,15 +60,14 @@ const Contact: React.FC = () => {
         
         {/* Info Column */}
         <div>
-          <h1 className="font-serif text-4xl md:text-5xl text-primary mb-8">Let's Connect</h1>
+          <h1 className="font-serif text-4xl md:text-5xl text-primary mb-8">Let&apos;s Connect</h1>
           <p className="text-md text-slate-600 font-light leading-relaxed mb-12">
             I am always open to academic discourse, speaking engagements, or research collaborations on almost anything law and policy.
           </p>
 
           <div className="space-y-8">
             <div className="flex items-start">
-              {/* FIX: Using Lucide MapPin */}
-              <MapPin className="text-accent mt-1 mr-4 w-6 h-6" />
+              <FontAwesomeIcon icon={faLocationDot} className="text-accent mt-1 mr-4 w-6 h-6" />
               <div>
                 <h4 className="font-medium text-primary">Location</h4>
                 <p className="text-slate-500">Based in {siteConfig.location}</p>
@@ -83,8 +75,7 @@ const Contact: React.FC = () => {
             </div>
             
             <div className="flex items-start">
-              {/* FIX: Using Lucide Mail */}
-              <Mail className="text-accent mt-1 mr-4 w-6 h-6" />
+              <FontAwesomeIcon icon={faEnvelope} className="text-accent mt-1 mr-4 w-6 h-6" />
               <div>
                 <h4 className="font-medium text-primary">Email</h4>
                 <a href={`mailto:${siteConfig.email}`} className="text-slate-500 hover:text-primary transition-colors">
@@ -97,21 +88,18 @@ const Contact: React.FC = () => {
              <div className="pt-10 grid grid-cols-2 gap-y-4">
                 <BoxIcon 
                   href={siteConfig.social.linkedin} 
-                  /* FIX: Using Lucide Linkedin */
-                  icon={<Linkedin className="w-5 h-5" />} 
+                  icon={<FontAwesomeIcon icon={faLinkedin} className="w-5 h-5" />} 
                   label="LinkedIn" 
                 />
                 <BoxIcon 
                   href={siteConfig.social.scholar} 
-                  /* FIX: Using Lucide GraduationCap */
-                  icon={<GraduationCap className="w-5 h-5" />} 
+                  icon={<FontAwesomeIcon icon={faGraduationCap} className="w-5 h-5" />} 
                   label="Google Scholar" 
                 />
                 {siteConfig.social.ssrn && (
                   <BoxIcon 
                     href={siteConfig.social.ssrn} 
-                    /* FIX: Using Lucide Bookmark */
-                    icon={<Bookmark className="w-5 h-5" />} 
+                    icon={<FontAwesomeIcon icon={faBookmark} className="w-5 h-5" />} 
                     label="SSRN" 
                   />
                 )}
@@ -124,8 +112,7 @@ const Contact: React.FC = () => {
           {status === 'success' ? (
               <div className="h-full flex flex-col items-center justify-center text-center space-y-4 animate-in fade-in duration-500">
                   <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-2">
-                      {/* FIX: Using Lucide Check */}
-                      <Check className="w-8 h-8" />
+                      <FontAwesomeIcon icon={faCheck} className="w-8 h-8" />
                   </div>
                   <h3 className="font-serif text-2xl text-primary">Message Sent</h3>
                   <p className="text-slate-600">Thank you for reaching out. I will get back to you shortly.</p>

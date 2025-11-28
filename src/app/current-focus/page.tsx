@@ -1,22 +1,33 @@
-'use client'; // 1. Directs Next.js to run this on the client
-
 import React from 'react';
-import Link from 'next/link'; // 2. Replaces react-router-dom
+import Link from 'next/link';
 import { ArrowLeft, Target } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
-import { useData } from '@/contexts/DataContext'; // Updated path alias if needed
 import Section from '@/components/Section';
+import { supabase } from '@/lib/supabase';
+import { SITE_CONFIG } from '@/constants';
+import type { Metadata } from 'next';
 
-const CurrentFocus: React.FC = () => {
-  // Note: SEO is handled by the layout or metadata in a parent server component
-  // For client components, we usually skip document.title manipulation or use a wrapper
-  
-  const { siteConfig } = useData();
+export const metadata: Metadata = {
+  title: 'Current Research Focus',
+  description: 'Research on regulatory fragmentation in African capital markets and AfCFTA protocols.',
+  openGraph: {
+    title: 'Current Research Focus | Frankline Chisom Ebere',
+    description: 'Research on regulatory fragmentation in African capital markets and AfCFTA protocols.',
+    url: 'https://franklinechisom.com/current-focus',
+  }
+};
+
+async function getFocusContent() {
+  const { data } = await supabase.from('site_config').select('focus_content').single();
+  return data?.focus_content || SITE_CONFIG.focusContent;
+}
+
+export default async function CurrentFocus() {
+  const focusContent = await getFocusContent();
   
   return (
     <div className="max-w-3xl mx-auto px-6 pt-8 pb-20">
       <Section>
-        {/* 3. 'to' prop becomes 'href' */}
         <Link href="/" className="inline-flex items-center text-sm text-slate-500 hover:text-primary mb-8 transition-colors">
           <ArrowLeft size={16} className="mr-2" /> Back to Home
         </Link>
@@ -31,7 +42,7 @@ const CurrentFocus: React.FC = () => {
         </h1>
 
         <div className="prose prose-lg prose-slate max-w-none font-light prose-headings:font-serif prose-headings:text-primary prose-a:text-accent prose-a:no-underline hover:prose-a:underline prose-li:marker:text-accent">
-          <ReactMarkdown>{siteConfig.focusContent || "Content coming soon..."}</ReactMarkdown>
+          <ReactMarkdown>{focusContent || "Content coming soon..."}</ReactMarkdown>
         </div>
 
         <div className="mt-16 pt-8 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-6">
@@ -48,6 +59,4 @@ const CurrentFocus: React.FC = () => {
       </Section>
     </div>
   );
-};
-
-export default CurrentFocus;
+}

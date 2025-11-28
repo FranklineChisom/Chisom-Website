@@ -35,21 +35,21 @@ const UnsubscribeContent: React.FC = () => {
       if (success) {
         setStatus('success');
       } else {
-        setStatus('not-found');
+        setStatus('not-found'); // This might mean the email wasn't in the DB to begin with
       }
     }, 500);
   };
 
   if (status === 'success') {
     return (
-       <div className="text-center py-6">
+       <div className="text-center py-6 animate-in fade-in">
           <CheckCircle className="mx-auto text-green-600 mb-4" size={48} />
           <h3 className="text-xl font-bold text-slate-800 mb-2">Unsubscribed Successfully</h3>
           <p className="text-slate-600 mb-6">
             <span className="font-semibold">{email}</span> has been removed from our mailing list.
           </p>
           <p className="text-sm text-slate-500 mb-6">
-            We're sorry to see you go. You won't receive any more newsletters from us.
+            We&apos;re sorry to see you go. You won&apos;t receive any more newsletters from us.
           </p>
           <Link href="/" className="text-primary font-medium hover:underline">Return to Home</Link>
        </div>
@@ -58,7 +58,7 @@ const UnsubscribeContent: React.FC = () => {
 
   if (status === 'not-found') {
     return (
-       <div className="text-center py-6">
+       <div className="text-center py-6 animate-in fade-in">
           <AlertCircle className="mx-auto text-yellow-500 mb-4" size={48} />
           <h3 className="text-xl font-bold text-slate-800 mb-2">Email Not Found</h3>
           <p className="text-slate-600 mb-6">
@@ -98,7 +98,7 @@ const UnsubscribeContent: React.FC = () => {
           id="email" 
           value={email}
           onChange={e => setEmail(e.target.value)}
-          className="w-full bg-white border border-slate-200 px-4 py-3 focus:outline-none focus:border-primary transition-colors text-slate-800"
+          className="w-full bg-white border border-slate-200 px-4 py-3 focus:outline-none focus:border-primary transition-colors text-slate-800 rounded-none"
           placeholder="name@example.com"
           required
         />
@@ -108,7 +108,7 @@ const UnsubscribeContent: React.FC = () => {
       </div>
       <button 
         type="submit" 
-        className="w-full bg-slate-800 text-white font-medium py-3 hover:bg-red-600 transition-colors"
+        className="w-full bg-slate-800 text-white font-medium py-3 hover:bg-red-600 transition-colors rounded-none"
       >
         Unsubscribe
       </button>
