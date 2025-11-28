@@ -120,7 +120,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         pt-16 md:pt-0
       `}>
         <div className="p-6 hidden md:block">
-          <Link href="/" className="text-white font-serif text-xl font-bold hover:text-accent transition-colors">
+          <Link href="/" className="text-white font-serif text-xl font-medium hover:text-accent transition-colors">
             Frankline Chisom
           </Link>
           <div className="text-xs uppercase tracking-widest mt-1 opacity-50">Admin Console</div>
