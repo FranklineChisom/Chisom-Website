@@ -1,6 +1,7 @@
-import React from 'react';
-import { Helmet } from 'react-helmet-async';
-import { useData } from '../contexts/DataContext';
+'use client';
+
+import React, { useEffect } from 'react';
+import { useData } from '@/contexts/DataContext';
 
 interface SEOProps {
   title?: string;
@@ -13,7 +14,7 @@ interface SEOProps {
   modifiedTime?: string;
   section?: string;
   tags?: string[];
-  contentType?: string; // For structured data (e.g., 'BlogPosting', 'Person')
+  contentType?: string;
 }
 
 const SEO: React.FC<SEOProps> = ({ 
@@ -23,10 +24,6 @@ const SEO: React.FC<SEOProps> = ({
   image, 
   url, 
   type = 'website',
-  publishedTime,
-  modifiedTime,
-  section,
-  tags,
   contentType
 }) => {
   const { siteConfig } = useData();
@@ -35,112 +32,48 @@ const SEO: React.FC<SEOProps> = ({
   const siteName = siteConfig.name || 'Frankline Chisom Ebere';
   const defaultDescription = siteConfig.role + ' specializing in International Financial Law and African capital markets.';
   const siteUrl = 'https://franklinechisom.com';
-  const twitterHandle = '@Frankline_Rolis';
   
   // Computed Values
   const fullTitle = title ? `${title} | ${siteName}` : siteName;
   const metaDescription = description || defaultDescription;
-  const metaImage = image || `${siteUrl}/images/og-image.jpg`; // Ensure you have a default OG image
+  const metaImage = image || `${siteUrl}/images/og-image.jpg`;
   const canonicalUrl = url ? (url.startsWith('http') ? url : `${siteUrl}${url}`) : siteUrl;
 
-  // JSON-LD Structured Data Generator
-  const getStructuredData = () => {
-    const baseData = {
-      "@context": "https://schema.org",
-      "@type": contentType || "WebSite",
-      "name": fullTitle,
-      "url": canonicalUrl,
+  useEffect(() => {
+    // Update Title
+    document.title = fullTitle;
+
+    // Helper to update meta tags dynamically
+    const updateMeta = (name: string, content: string, attribute = 'name') => {
+      let element = document.querySelector(`meta[${attribute}="${name}"]`);
+      if (!element) {
+        element = document.createElement('meta');
+        element.setAttribute(attribute, name);
+        document.head.appendChild(element);
+      }
+      element.setAttribute('content', content);
     };
 
-    if (contentType === 'Person' || type === 'profile') {
-      return {
-        ...baseData,
-        "@type": "Person",
-        "name": siteConfig.name,
-        "jobTitle": siteConfig.role,
-        "url": siteUrl,
-        "image": siteConfig.aboutImage,
-        "sameAs": [
-          siteConfig.social.linkedin,
-          siteConfig.social.twitter,
-          siteConfig.social.scholar,
-          siteConfig.social.ssrn
-        ].filter(Boolean)
-      };
-    }
+    // Update Basic Meta
+    updateMeta('description', metaDescription);
+    if (keywords) updateMeta('keywords', keywords);
+    updateMeta('author', siteConfig.name);
 
-    if (contentType === 'BlogPosting' || type === 'article') {
-      return {
-        ...baseData,
-        "@type": "BlogPosting",
-        "headline": title,
-        "image": metaImage,
-        "author": {
-          "@type": "Person",
-          "name": siteConfig.name,
-          "url": siteUrl
-        },
-        "publisher": {
-          "@type": "Organization",
-          "name": siteName,
-          "logo": {
-            "@type": "ImageObject",
-            "url": `${siteUrl}/logo.png` // Ensure you have a logo or remove this line
-          }
-        },
-        "datePublished": publishedTime,
-        "dateModified": modifiedTime || publishedTime,
-        "description": metaDescription,
-        "mainEntityOfPage": {
-          "@type": "WebPage",
-          "@id": canonicalUrl
-        }
-      };
-    }
+    // Update Open Graph
+    updateMeta('og:title', fullTitle, 'property');
+    updateMeta('og:description', metaDescription, 'property');
+    updateMeta('og:url', canonicalUrl, 'property');
+    updateMeta('og:type', type, 'property');
+    updateMeta('og:image', metaImage, 'property');
 
-    return baseData;
-  };
+    // Update Twitter
+    updateMeta('twitter:title', fullTitle, 'name');
+    updateMeta('twitter:description', metaDescription, 'name');
+    updateMeta('twitter:image', metaImage, 'name');
 
-  return (
-    <Helmet>
-      {/* Standard Metadata */}
-      <title>{fullTitle}</title>
-      <meta name="description" content={metaDescription} />
-      {keywords && <meta name="keywords" content={keywords} />}
-      <link rel="canonical" href={canonicalUrl} />
-      <meta name="author" content={siteConfig.name} />
+  }, [fullTitle, metaDescription, keywords, siteConfig.name, canonicalUrl, type, metaImage]);
 
-      {/* Open Graph / Facebook */}
-      <meta property="og:type" content={type} />
-      <meta property="og:url" content={canonicalUrl} />
-      <meta property="og:title" content={fullTitle} />
-      <meta property="og:description" content={metaDescription} />
-      <meta property="og:image" content={metaImage} />
-      <meta property="og:site_name" content={siteName} />
-      <meta property="og:locale" content="en_US" />
-
-      {/* Twitter */}
-      <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:creator" content={twitterHandle} />
-      <meta name="twitter:site" content={twitterHandle} />
-      <meta name="twitter:title" content={fullTitle} />
-      <meta name="twitter:description" content={metaDescription} />
-      <meta name="twitter:image" content={metaImage} />
-
-      {/* Article Specifics */}
-      {publishedTime && <meta property="article:published_time" content={publishedTime} />}
-      {modifiedTime && <meta property="article:modified_time" content={modifiedTime} />}
-      {section && <meta property="article:section" content={section} />}
-      {tags && tags.map(tag => (
-        <meta property="article:tag" content={tag} key={tag} />
-      ))}
-
-      {/* Structured Data (JSON-LD) */}
-      <script type="application/ld+json">
-        {JSON.stringify(getStructuredData())}
-      </script>
-    </Helmet>
-  );
+  return null; // This component doesn't render anything visibly
 };
 
 export default SEO;
