@@ -19,10 +19,10 @@ const AdminLogin = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // FIX: Updated to match standard (email, password) signature
+    // Calling login with email, password to match DataContext signature
     const success = await login(email, password);
     if (success) {
-      router.refresh(); // Refresh to update auth state
+      router.refresh(); // Refresh server components to reflect authenticated state if needed
     } else {
       setError(true);
     }
@@ -55,7 +55,7 @@ const AdminLogin = () => {
               required
             />
           </div>
-          {error && <p className="text-red-500 text-sm">Invalid login credentials. Please check your Supabase Auth user.</p>}
+          {error && <p className="text-red-500 text-sm">Invalid email or password</p>}
           <button type="submit" className="w-full bg-primary text-white py-2 rounded-none hover:bg-slate-800 transition-colors">
             Login
           </button>
@@ -68,8 +68,13 @@ const AdminLogin = () => {
 // --- Nav Helper ---
 const AdminLink = ({ href, icon, label, onClick }: { href: string; icon: React.ReactNode; label: string; onClick?: () => void }) => {
   const pathname = usePathname();
-  // Check if active (handle root /admin vs sub-routes)
-  const isActive = href === '/admin' ? pathname === '/admin' : pathname.startsWith(href);
+  
+  // Logic to match Vite's behavior:
+  // - exact match for root '/admin' (Overview)
+  // - prefix match for sub-pages (e.g. '/admin/blog')
+  const isActive = href === '/admin' 
+    ? (pathname === '/admin' || pathname === '/admin/') 
+    : pathname.startsWith(href);
   
   return (
     <Link 
@@ -115,7 +120,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <aside className={`
         w-64 bg-primary text-slate-400 flex flex-col fixed h-full z-10 transition-transform duration-300
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0
-        pt-16 md:pt-0
+        md:pt-0
       `}>
         <div className="p-6 hidden md:block">
           <div className="text-white font-serif text-xl font-bold">Frankline Chisom</div>

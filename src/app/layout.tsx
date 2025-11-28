@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
-import "./globals.css"; // Ensure you have this file for Tailwind directives
+import "./globals.css";
 import { Providers } from "./providers";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import ClientLayout from "@/components/ClientLayout";
 
 // Configure Fonts
 const inter = Inter({ 
@@ -38,11 +37,9 @@ export default function RootLayout({
       <body className={`${inter.variable} ${playfair.variable} font-sans bg-white text-slate-800 antialiased`}>
         {/* Providers wraps the entire app to give access to DataContext and ToastContext */}
         <Providers>
-          <Navbar />
-          <main className="min-h-screen pt-24 md:pt-32 pb-20">
+          <ClientLayout>
             {children}
-          </main>
-          <Footer />
+          </ClientLayout>
         </Providers>
       </body>
     </html>
