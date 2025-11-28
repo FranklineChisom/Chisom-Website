@@ -1,55 +1,98 @@
-'use client';
-
-import React, { useState } from 'react';
-import { useParams, useRouter } from 'next/navigation'; // 1. Next.js hooks
+import React from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Calendar, Mail, Check, AlertCircle } from 'lucide-react';
+import Image from 'next/image';
+import { ArrowLeft, Calendar, Mail } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
-import { useData } from '@/contexts/DataContext';
 import Section from '@/components/Section';
+import { supabase } from '@/lib/supabase';
+import { NEWSLETTERS } from '@/constants';
+import { Newsletter } from '@/types';
+import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
+import NewsletterSubscribeBox from '@/components/NewsletterSubscribeBox'; // Extract client logic
 
-const NewsletterPost: React.FC = () => {
-  const params = useParams(); // 2. Get params from Next.js hook
-  const router = useRouter(); // 3. For programmatic navigation
-  const id = params?.slug as string; // Access the dynamic segment safely
+export const revalidate = 60;
 
-  const { newsletters, addSubscriber, isLoading } = useData();
-  const [email, setEmail] = useState('');
-  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-  
-  const post = newsletters.find(n => n.slug === id || n.id === id);
+interface Props {
+  params: Promise<{ slug: string }>;
+}
 
-  // 4. Handle Loading & Redirects
-  if (isLoading) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 border-3 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-slate-500">Loading newsletter...</p>
-        </div>
-      </div>
-    );
+// Fetch Helper
+async function getNewsletter(slug: string): Promise<Newsletter | null> {
+  // 1. Try Database
+  const { data, error } = await supabase
+    .from('newsletters')
+    .select('*')
+    .eq('slug', slug)
+    .single();
+
+  if (data) {
+    return {
+      id: data.id,
+      slug: data.slug,
+      title: data.title,
+      date: data.date,
+      description: data.description,
+      content: data.content,
+      coverImage: data.cover_image,
+      published: data.published
+    };
   }
 
-  if (!isLoading && !post) {
-    router.replace('/'); // 5. Use router.replace instead of <Navigate>
-    return null;
+  // 2. Try ID fallback
+  const { data: dataById } = await supabase
+    .from('newsletters')
+    .select('*')
+    .eq('id', slug)
+    .single();
+
+  if (dataById) {
+      return {
+      id: dataById.id,
+      slug: dataById.slug,
+      title: dataById.title,
+      date: dataById.date,
+      description: dataById.description,
+      content: dataById.content,
+      coverImage: dataById.cover_image,
+      published: dataById.published
+    };
   }
 
-  if (!post) return null;
+  // 3. Fallback to Constants
+  const constantItem = NEWSLETTERS.find(n => n.slug === slug || n.id === slug);
+  return constantItem || null;
+}
 
-  const handleSubscribe = async () => {
-    if(!email) return;
-    setStatus('loading');
-    const success = await addSubscriber(email);
-    setTimeout(() => {
-        if(success) {
-            setStatus('success');
-        } else {
-            setStatus('error');
-        }
-    }, 500);
+// Generate Metadata
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const params = await props.params;
+  const post = await getNewsletter(params.slug);
+
+  if (!post) {
+    return { title: 'Newsletter Not Found' };
+  }
+
+  return {
+    title: post.title,
+    description: post.description,
+    openGraph: {
+      title: post.title,
+      description: post.description,
+      images: post.coverImage ? [{ url: post.coverImage }] : [],
+      type: 'article',
+      publishedTime: post.date,
+    },
   };
+}
+
+export default async function NewsletterPost(props: Props) {
+  const params = await props.params;
+  const post = await getNewsletter(params.slug);
+
+  if (!post) {
+    notFound();
+  }
 
   return (
     <div className="max-w-3xl mx-auto px-6 pt-8 pb-20">
@@ -72,12 +115,13 @@ const NewsletterPost: React.FC = () => {
         </h1>
 
         {post.coverImage && (
-          <div className="mb-10">
-            {/* Optimized standard image tag for now, can upgrade to next/image later */}
-            <img 
+          <div className="mb-10 relative w-full h-[300px] md:h-[500px]">
+            <Image 
               src={post.coverImage} 
               alt={post.title} 
-              className="w-full h-auto object-cover max-h-[500px] rounded-none shadow-sm"
+              fill
+              className="object-cover rounded-none shadow-sm"
+              priority
             />
           </div>
         )}
@@ -91,50 +135,10 @@ const NewsletterPost: React.FC = () => {
              <p className="text-slate-600 text-sm leading-relaxed mb-6">
                  If you enjoyed this issue, join the list to get the next one directly in your inbox.
              </p>
-             <div className="flex flex-col gap-4">
-                {status === 'success' ? (
-                     <div>
-                        <div className="flex items-center gap-2 text-primary font-medium w-full py-2">
-                            <Check size={20} /> Thanks for subscribing!
-                        </div>
-                        <Link href={`/unsubscribe?email=${encodeURIComponent(email)}`} className="text-xs text-slate-400 hover:text-primary underline ml-7">
-                             Mistake? Unsubscribe here.
-                        </Link>
-                     </div>
-                ): status === 'loading' ? (
-                    <div className="flex items-center gap-2 text-slate-500 py-2">
-                        <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-                        Checking subscription...
-                    </div>
-                ) : status === 'error' ? (
-                     <div>
-                         <div className="flex items-center gap-2 text-yellow-600 font-medium w-full py-2">
-                            <AlertCircle size={20} /> You are already subscribed.
-                         </div>
-                         <div className="flex gap-4 ml-7 text-xs">
-                             <button onClick={() => setStatus('idle')} className="text-primary hover:underline">Try another email</button>
-                             <Link href={`/unsubscribe?email=${encodeURIComponent(email)}`} className="text-slate-400 hover:text-primary underline">
-                                Unsubscribe
-                             </Link>
-                         </div>
-                     </div>
-                ) : (
-                    <div className="flex gap-2">
-                        <input 
-                            type="email" 
-                            placeholder="Email Address" 
-                            value={email}
-                            onChange={e => setEmail(e.target.value)}
-                            className="px-4 py-2 border border-slate-200 focus:outline-none focus:border-primary w-full md:w-64 bg-white" 
-                            />
-                        <button onClick={handleSubscribe} className="bg-primary text-white px-6 py-2 font-medium hover:bg-slate-800 transition-colors">Join</button>
-                    </div>
-                )}
-             </div>
+             {/* Client Component for subscription logic */}
+             <NewsletterSubscribeBox />
         </div>
       </Section>
     </div>
   );
-};
-
-export default NewsletterPost;
+}
