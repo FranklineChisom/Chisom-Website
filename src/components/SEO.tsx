@@ -1,79 +1,146 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { useData } from '@/contexts/DataContext';
+import Section from '@/components/Section';
+import { CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 
-interface SEOProps {
-  title?: string;
-  description?: string;
-  keywords?: string;
-  image?: string;
-  url?: string;
-  type?: 'website' | 'article' | 'book' | 'profile';
-  publishedTime?: string;
-  modifiedTime?: string;
-  section?: string;
-  tags?: string[];
-  contentType?: string;
-}
-
-const SEO: React.FC<SEOProps> = ({ 
-  title, 
-  description, 
-  keywords, 
-  image, 
-  url, 
-  type = 'website',
-  contentType
-}) => {
-  const { siteConfig } = useData();
-
-  // Defaults
-  const siteName = siteConfig.name || 'Frankline Chisom Ebere';
-  const defaultDescription = siteConfig.role + ' specializing in International Financial Law and African capital markets.';
-  const siteUrl = 'https://franklinechisom.com';
-  
-  // Computed Values
-  const fullTitle = title ? `${title} | ${siteName}` : siteName;
-  const metaDescription = description || defaultDescription;
-  const metaImage = image || `${siteUrl}/images/og-image.jpg`;
-  const canonicalUrl = url ? (url.startsWith('http') ? url : `${siteUrl}${url}`) : siteUrl;
+// Create a separate component for the search params logic
+const UnsubscribeContent: React.FC = () => {
+  const searchParams = useSearchParams();
+  const { removeSubscriber } = useData();
+  const [email, setEmail] = useState('');
+  const [status, setStatus] = useState<'idle' | 'success' | 'not-found' | 'loading'>('idle');
 
   useEffect(() => {
-    // Update Title
-    document.title = fullTitle;
+    document.title = 'Unsubscribe | Frankline Chisom Ebere';
+    
+    const emailParam = searchParams.get('email');
+    if (emailParam) {
+      setEmail(decodeURIComponent(emailParam));
+    }
+  }, [searchParams]);
 
-    // Helper to update meta tags dynamically
-    const updateMeta = (name: string, content: string, attribute = 'name') => {
-      let element = document.querySelector(`meta[${attribute}="${name}"]`);
-      if (!element) {
-        element = document.createElement('meta');
-        element.setAttribute(attribute, name);
-        document.head.appendChild(element);
+  const handleUnsubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if(!email) return;
+
+    setStatus('loading');
+
+    const success = await removeSubscriber(email);
+    
+    setTimeout(() => {
+      if (success) {
+        setStatus('success');
+      } else {
+        setStatus('not-found');
       }
-      element.setAttribute('content', content);
-    };
+    }, 500);
+  };
 
-    // Update Basic Meta
-    updateMeta('description', metaDescription);
-    if (keywords) updateMeta('keywords', keywords);
-    updateMeta('author', siteConfig.name);
+  if (status === 'success') {
+    return (
+       <div className="text-center py-6">
+          <CheckCircle className="mx-auto text-green-600 mb-4" size={48} />
+          <h3 className="text-xl font-bold text-slate-800 mb-2">Unsubscribed Successfully</h3>
+          <p className="text-slate-600 mb-6">
+            <span className="font-semibold">{email}</span> has been removed from our mailing list.
+          </p>
+          <p className="text-sm text-slate-500 mb-6">
+            We're sorry to see you go. You won't receive any more newsletters from us.
+          </p>
+          <Link href="/" className="text-primary font-medium hover:underline">Return to Home</Link>
+       </div>
+    );
+  }
 
-    // Update Open Graph
-    updateMeta('og:title', fullTitle, 'property');
-    updateMeta('og:description', metaDescription, 'property');
-    updateMeta('og:url', canonicalUrl, 'property');
-    updateMeta('og:type', type, 'property');
-    updateMeta('og:image', metaImage, 'property');
+  if (status === 'not-found') {
+    return (
+       <div className="text-center py-6">
+          <AlertCircle className="mx-auto text-yellow-500 mb-4" size={48} />
+          <h3 className="text-xl font-bold text-slate-800 mb-2">Email Not Found</h3>
+          <p className="text-slate-600 mb-6">
+            We could not find <span className="font-semibold">{email}</span> in our subscriber list.
+          </p>
+          <p className="text-sm text-slate-500 mb-6">
+            This email address may have already been unsubscribed or was never subscribed to our newsletter.
+          </p>
+          <button 
+            onClick={() => setStatus('idle')} 
+            className="text-primary font-medium hover:underline mb-4 block mx-auto"
+          >
+            Try a different email
+          </button>
+          <Link href="/" className="text-slate-400 text-sm hover:text-slate-600">Return to Home</Link>
+       </div>
+    );
+  }
 
-    // Update Twitter
-    updateMeta('twitter:title', fullTitle, 'name');
-    updateMeta('twitter:description', metaDescription, 'name');
-    updateMeta('twitter:image', metaImage, 'name');
+  if (status === 'loading') {
+    return (
+       <div className="text-center py-6">
+          <Loader2 className="animate-spin mx-auto text-primary mb-4" size={48} />
+          <p className="text-slate-500">Processing your request...</p>
+       </div>
+    );
+  }
 
-  }, [fullTitle, metaDescription, keywords, siteConfig.name, canonicalUrl, type, metaImage]);
-
-  return null; // This component doesn't render anything visibly
+  return (
+    <form onSubmit={handleUnsubscribe} className="space-y-6">
+      <div>
+        <label htmlFor="email" className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">
+          Confirm Email Address
+        </label>
+        <input 
+          type="email" 
+          id="email" 
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          className="w-full bg-white border border-slate-200 px-4 py-3 focus:outline-none focus:border-primary transition-colors text-slate-800"
+          placeholder="name@example.com"
+          required
+        />
+        <p className="text-xs text-slate-500 mt-2">
+          Enter the email address you want to unsubscribe from our newsletter.
+        </p>
+      </div>
+      <button 
+        type="submit" 
+        className="w-full bg-slate-800 text-white font-medium py-3 hover:bg-red-600 transition-colors"
+      >
+        Unsubscribe
+      </button>
+      <div className="text-center mt-4">
+         <Link href="/" className="text-sm text-slate-400 hover:text-slate-600">Cancel and return home</Link>
+      </div>
+    </form>
+  );
 };
 
-export default SEO;
+const UnsubscribePage: React.FC = () => {
+  return (
+    <div className="max-w-xl mx-auto px-6 py-24 min-h-[60vh] flex flex-col justify-center">
+      <Section>
+        <div className="text-center mb-12">
+           <h1 className="font-serif text-3xl text-primary mb-4">Newsletter Preferences</h1>
+           <p className="text-slate-600">Manage your subscription status.</p>
+        </div>
+
+        <div className="bg-slate-50 p-8 rounded-sm shadow-sm border border-slate-100">
+          <Suspense fallback={
+            <div className="text-center py-10">
+              <Loader2 className="animate-spin mx-auto text-primary mb-4" size={32} />
+              <p className="text-slate-500">Loading...</p>
+            </div>
+          }>
+            <UnsubscribeContent />
+          </Suspense>
+        </div>
+      </Section>
+    </div>
+  );
+};
+
+export default UnsubscribePage;
