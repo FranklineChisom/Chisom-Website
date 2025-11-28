@@ -29,7 +29,7 @@ interface DataContextType {
   addSubscriber: (email: string) => Promise<boolean>;
   removeSubscriber: (email: string) => Promise<boolean>;
   isAuthenticated: boolean;
-  login: (password: string, email: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   isLoading: boolean;
 }
@@ -43,30 +43,24 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [newsletters, setNewsletters] = useState<Newsletter[]>([]);
   const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
-  
-  // FIX: Initialize to false. Do NOT access localStorage here.
-  // The correct state will be set by the useEffect below once the component mounts in the browser.
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(true);
 
   // Load data from Supabase on mount
   useEffect(() => {
-    loadAllData();
+    // Check localStorage for auth state on mount (Client-side only)
+    const storedAuth = localStorage.getItem('isAuthenticated');
+    if (storedAuth === 'true') {
+      setIsAuthenticated(true);
+    }
     
-    // Check for active Supabase session on mount
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setIsAuthenticated(!!session);
-    };
-    checkSession();
-
-    // Listen for auth changes (login/logout/refresh)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsAuthenticated(!!session);
-    });
-
-    return () => subscription.unsubscribe();
+    loadAllData();
   }, []);
+
+  // Persist auth state
+  useEffect(() => {
+    localStorage.setItem('isAuthenticated', String(isAuthenticated));
+  }, [isAuthenticated]);
 
   const loadAllData = async () => {
     setIsLoading(true);
@@ -94,7 +88,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       .single();
 
     if (error) {
-      // Don't log error for empty table on fresh setup
       if (error.code !== 'PGRST116') {
          handleSupabaseError(error, 'Error loading site config');
       }
@@ -116,13 +109,12 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email: data.email,
         location: data.location,
         social: data.social,
-        analyticsUrl: data.analytics_url // Load from DB
+        analyticsUrl: data.analytics_url
       });
     }
   };
 
   const updateSiteConfig = async (config: SiteConfig): Promise<boolean> => {
-    // Check if a row exists
     const { data: existing } = await supabase.from('site_config').select('id').single();
     
     let error;
@@ -140,7 +132,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email: config.email,
         location: config.location,
         social: config.social,
-        analytics_url: config.analyticsUrl, // Save to DB
+        analytics_url: config.analyticsUrl,
         updated_at: new Date().toISOString()
     };
 
@@ -153,7 +145,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } else {
        const { error: insertError } = await supabase
         .from('site_config')
-        .insert([payload]); // Insert as array
+        .insert([payload]);
        error = insertError;
     }
 
@@ -168,16 +160,12 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Blog Posts
   const loadBlogPosts = async () => {
-    const { data, error } = await supabase
-      .from('blog_posts')
-      .select('*');
-
+    const { data, error } = await supabase.from('blog_posts').select('*');
     if (error) {
       handleSupabaseError(error, 'Error loading blog posts');
       setBlogPosts(DEFAULT_POSTS);
       return;
     }
-
     const posts = data.map(post => ({
       id: post.id,
       slug: post.slug,
@@ -190,34 +178,27 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       coverImage: post.cover_image,
       published: post.published
     }));
-
-    // Sort by date descending (newest first)
     posts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
     setBlogPosts(posts);
   };
 
   const addBlogPost = async (post: BlogPost): Promise<boolean> => {
-    const { error } = await supabase
-      .from('blog_posts')
-      .insert({
-        id: post.id,
-        slug: post.slug,
-        title: post.title,
-        date: post.date,
-        category: post.category,
-        read_time: post.readTime,
-        excerpt: post.excerpt,
-        content: post.content,
-        cover_image: post.coverImage,
-        published: post.published
-      });
-
+    const { error } = await supabase.from('blog_posts').insert({
+      id: post.id,
+      slug: post.slug,
+      title: post.title,
+      date: post.date,
+      category: post.category,
+      read_time: post.readTime,
+      excerpt: post.excerpt,
+      content: post.content,
+      cover_image: post.coverImage,
+      published: post.published
+    });
     if (error) {
       handleSupabaseError(error, 'Error adding blog post');
       return false;
     }
-
     const newPosts = [post, ...blogPosts];
     newPosts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     setBlogPosts(newPosts);
@@ -225,27 +206,22 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const updateBlogPost = async (post: BlogPost): Promise<boolean> => {
-    const { error } = await supabase
-      .from('blog_posts')
-      .update({
-        slug: post.slug,
-        title: post.title,
-        date: post.date,
-        category: post.category,
-        read_time: post.readTime,
-        excerpt: post.excerpt,
-        content: post.content,
-        cover_image: post.coverImage,
-        published: post.published,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', post.id);
-
+    const { error } = await supabase.from('blog_posts').update({
+      slug: post.slug,
+      title: post.title,
+      date: post.date,
+      category: post.category,
+      read_time: post.readTime,
+      excerpt: post.excerpt,
+      content: post.content,
+      cover_image: post.coverImage,
+      published: post.published,
+      updated_at: new Date().toISOString()
+    }).eq('id', post.id);
     if (error) {
       handleSupabaseError(error, 'Error updating blog post');
       return false;
     }
-
     const updatedPosts = blogPosts.map(p => p.id === post.id ? post : p);
     updatedPosts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     setBlogPosts(updatedPosts);
@@ -253,32 +229,23 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const deleteBlogPost = async (id: string): Promise<boolean> => {
-    const { error } = await supabase
-      .from('blog_posts')
-      .delete()
-      .eq('id', id);
-
+    const { error } = await supabase.from('blog_posts').delete().eq('id', id);
     if (error) {
       handleSupabaseError(error, 'Error deleting blog post');
       return false;
     }
-
     setBlogPosts(blogPosts.filter(p => p.id !== id));
     return true;
   };
 
   // Publications
   const loadPublications = async () => {
-    const { data, error } = await supabase
-      .from('publications')
-      .select('*');
-
+    const { data, error } = await supabase.from('publications').select('*');
     if (error) {
       handleSupabaseError(error, 'Error loading publications');
       setPublications(DEFAULT_PUBS);
       return;
     }
-
     const pubs = data.map(pub => ({
       id: pub.id,
       title: pub.title,
@@ -291,37 +258,27 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       link: pub.link,
       published: pub.published
     }));
-
-    pubs.sort((a, b) => {
-        const yearA = parseInt(a.year) || 0;
-        const yearB = parseInt(b.year) || 0;
-        return yearB - yearA;
-    });
-
+    pubs.sort((a, b) => (parseInt(b.year) || 0) - (parseInt(a.year) || 0));
     setPublications(pubs);
   };
 
   const addPublication = async (pub: Publication): Promise<boolean> => {
-    const { error } = await supabase
-      .from('publications')
-      .insert({
-        id: pub.id,
-        title: pub.title,
-        year: pub.year,
-        venue: pub.venue,
-        type: pub.type,
-        featured: pub.featured || false,
-        abstract: pub.abstract,
-        co_authors: pub.coAuthors || [],
-        link: pub.link,
-        published: pub.published
-      });
-
+    const { error } = await supabase.from('publications').insert({
+      id: pub.id,
+      title: pub.title,
+      year: pub.year,
+      venue: pub.venue,
+      type: pub.type,
+      featured: pub.featured || false,
+      abstract: pub.abstract,
+      co_authors: pub.coAuthors || [],
+      link: pub.link,
+      published: pub.published
+    });
     if (error) {
       handleSupabaseError(error, 'Error adding publication');
       return false;
     }
-
     const newPubs = [pub, ...publications];
     newPubs.sort((a, b) => (parseInt(b.year) || 0) - (parseInt(a.year) || 0));
     setPublications(newPubs);
@@ -329,27 +286,22 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const updatePublication = async (pub: Publication): Promise<boolean> => {
-    const { error } = await supabase
-      .from('publications')
-      .update({
-        title: pub.title,
-        year: pub.year,
-        venue: pub.venue,
-        type: pub.type,
-        featured: pub.featured,
-        abstract: pub.abstract,
-        co_authors: pub.coAuthors,
-        link: pub.link,
-        published: pub.published,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', pub.id);
-
+    const { error } = await supabase.from('publications').update({
+      title: pub.title,
+      year: pub.year,
+      venue: pub.venue,
+      type: pub.type,
+      featured: pub.featured,
+      abstract: pub.abstract,
+      co_authors: pub.coAuthors,
+      link: pub.link,
+      published: pub.published,
+      updated_at: new Date().toISOString()
+    }).eq('id', pub.id);
     if (error) {
       handleSupabaseError(error, 'Error updating publication');
       return false;
     }
-
     const updatedPubs = publications.map(p => p.id === pub.id ? pub : p);
     updatedPubs.sort((a, b) => (parseInt(b.year) || 0) - (parseInt(a.year) || 0));
     setPublications(updatedPubs);
@@ -357,32 +309,23 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const deletePublication = async (id: string): Promise<boolean> => {
-    const { error } = await supabase
-      .from('publications')
-      .delete()
-      .eq('id', id);
-
+    const { error } = await supabase.from('publications').delete().eq('id', id);
     if (error) {
       handleSupabaseError(error, 'Error deleting publication');
       return false;
     }
-
     setPublications(publications.filter(p => p.id !== id));
     return true;
   };
 
   // Newsletters
   const loadNewsletters = async () => {
-    const { data, error } = await supabase
-      .from('newsletters')
-      .select('*');
-
+    const { data, error } = await supabase.from('newsletters').select('*');
     if (error) {
       handleSupabaseError(error, 'Error loading newsletters');
       setNewsletters(DEFAULT_NEWSLETTERS);
       return;
     }
-
     const newsletterData = data.map(n => ({
         id: n.id,
         slug: n.slug,
@@ -393,18 +336,12 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         coverImage: n.cover_image,
         published: n.published
     }));
-
-    newsletterData.sort((a, b) => 
-      new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
-
+    newsletterData.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     setNewsletters(newsletterData);
   };
 
   const addNewsletter = async (item: Newsletter): Promise<boolean> => {
-    const { error } = await supabase
-      .from('newsletters')
-      .insert({
+    const { error } = await supabase.from('newsletters').insert({
           id: item.id,
           slug: item.slug,
           title: item.title,
@@ -414,12 +351,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           cover_image: item.coverImage,
           published: item.published
       });
-
     if (error) {
       handleSupabaseError(error, 'Error adding newsletter');
       return false;
     }
-
     const newNewsletters = [item, ...newsletters];
     newNewsletters.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     setNewsletters(newNewsletters);
@@ -427,25 +362,20 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const updateNewsletter = async (item: Newsletter): Promise<boolean> => {
-    const { error } = await supabase
-      .from('newsletters')
-      .update({
-        slug: item.slug,
-        title: item.title,
-        date: item.date,
-        description: item.description,
-        content: item.content,
-        cover_image: item.coverImage,
-        published: item.published,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', item.id);
-
+    const { error } = await supabase.from('newsletters').update({
+      slug: item.slug,
+      title: item.title,
+      date: item.date,
+      description: item.description,
+      content: item.content,
+      cover_image: item.coverImage,
+      published: item.published,
+      updated_at: new Date().toISOString()
+    }).eq('id', item.id);
     if (error) {
       handleSupabaseError(error, 'Error updating newsletter');
       return false;
     }
-
     const updatedNewsletters = newsletters.map(n => n.id === item.id ? item : n);
     updatedNewsletters.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     setNewsletters(updatedNewsletters);
@@ -453,200 +383,146 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const deleteNewsletter = async (id: string): Promise<boolean> => {
-    const { error } = await supabase
-      .from('newsletters')
-      .delete()
-      .eq('id', id);
-
+    const { error } = await supabase.from('newsletters').delete().eq('id', id);
     if (error) {
       handleSupabaseError(error, 'Error deleting newsletter');
       return false;
     }
-
     setNewsletters(newsletters.filter(n => n.id !== id));
     return true;
   };
 
   // Messages
   const loadMessages = async () => {
-    const { data, error } = await supabase
-      .from('messages')
-      .select('*')
-      .order('created_at', { ascending: false });
-
+    const { data, error } = await supabase.from('messages').select('*').order('created_at', { ascending: false });
     if (error) {
       handleSupabaseError(error, 'Error loading messages');
       return;
     }
-
     setMessages(data);
   };
 
   const addMessage = async (msg: ContactMessage): Promise<boolean> => {
-    const { error } = await supabase
-      .from('messages')
-      .insert(msg);
-
+    const { error } = await supabase.from('messages').insert(msg);
     if (error) {
       handleSupabaseError(error, 'Error adding message');
       return false;
     }
-
     setMessages([msg, ...messages]);
     return true;
   };
 
   const markMessageRead = async (id: string): Promise<boolean> => {
-    const { error } = await supabase
-      .from('messages')
-      .update({ read: true })
-      .eq('id', id);
-
+    const { error } = await supabase.from('messages').update({ read: true }).eq('id', id);
     if (error) {
       handleSupabaseError(error, 'Error marking message as read');
       return false;
     }
-
     setMessages(messages.map(m => m.id === id ? { ...m, read: true } : m));
     return true;
   };
 
   const markMessageUnread = async (id: string): Promise<boolean> => {
-    const { error } = await supabase
-      .from('messages')
-      .update({ read: false })
-      .eq('id', id);
-
+    const { error } = await supabase.from('messages').update({ read: false }).eq('id', id);
     if (error) {
       handleSupabaseError(error, 'Error marking message as unread');
       return false;
     }
-
     setMessages(messages.map(m => m.id === id ? { ...m, read: false } : m));
     return true;
   };
 
   const deleteMessage = async (id: string): Promise<boolean> => {
-    const { error } = await supabase
-      .from('messages')
-      .delete()
-      .eq('id', id);
-
+    const { error } = await supabase.from('messages').delete().eq('id', id);
     if (error) {
       handleSupabaseError(error, 'Error deleting message');
       return false;
     }
-
     setMessages(messages.filter(m => m.id !== id));
     return true;
   };
 
   // Subscribers
   const loadSubscribers = async () => {
-    const { data, error } = await supabase
-      .from('subscribers')
-      .select('*')
-      .order('created_at', { ascending: false });
-
+    const { data, error } = await supabase.from('subscribers').select('*').order('created_at', { ascending: false });
     if (error) {
       handleSupabaseError(error, 'Error loading subscribers');
       return;
     }
-
     setSubscribers(data);
   };
 
   const addSubscriber = async (email: string): Promise<boolean> => {
     const normalizedEmail = email.trim().toLowerCase();
-
-    const { data: existing, error: checkError } = await supabase
-      .from('subscribers')
-      .select('email')
-      .eq('email', normalizedEmail)
-      .maybeSingle(); 
-
+    const { data: existing, error: checkError } = await supabase.from('subscribers').select('email').eq('email', normalizedEmail).maybeSingle(); 
     if (checkError) {
       console.error('Error checking subscriber:', checkError);
       return false;
     }
-
-    if (existing) {
-      return false;
-    }
+    if (existing) return false;
 
     const newSub: Subscriber = {
       id: Date.now().toString(),
       email: normalizedEmail,
       date: new Date().toISOString()
     };
-
-    const { error: insertError } = await supabase
-      .from('subscribers')
-      .insert(newSub);
-
+    const { error: insertError } = await supabase.from('subscribers').insert(newSub);
     if (insertError) {
-      if (insertError.code === '23505') {
-        return false;
-      }
+      if (insertError.code === '23505') return false;
       handleSupabaseError(insertError, 'Error adding subscriber');
       return false;
     }
-
     setSubscribers([newSub, ...subscribers]);
     return true;
   };
 
   const removeSubscriber = async (email: string): Promise<boolean> => {
     const normalizedEmail = email.trim().toLowerCase();
-
-    const { data: existing, error: checkError } = await supabase
-      .from('subscribers')
-      .select('email')
-      .eq('email', normalizedEmail)
-      .maybeSingle();
-
+    const { data: existing, error: checkError } = await supabase.from('subscribers').select('email').eq('email', normalizedEmail).maybeSingle();
     if (checkError) {
       console.error('Error checking subscriber:', checkError);
       return false;
     }
-
-    if (!existing) {
-      return false;
-    }
-
-    const { error: deleteError } = await supabase
-      .from('subscribers')
-      .delete()
-      .eq('email', normalizedEmail);
-
+    if (!existing) return false;
+    const { error: deleteError } = await supabase.from('subscribers').delete().eq('email', normalizedEmail);
     if (deleteError) {
       handleSupabaseError(deleteError, 'Error removing subscriber');
       return false;
     }
-
     setSubscribers(subscribers.filter(s => s.email.toLowerCase() !== normalizedEmail));
     return true;
   };
 
-  // Authentication via Supabase
-  const login = async (password: string, email: string): Promise<boolean> => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+  // REVERTED AUTHENTICATION LOGIC (Custom Table)
+  const login = async (email: string, password: string): Promise<boolean> => {
+    const { data, error } = await supabase
+      .from('admin_auth')
+      .select('password_hash, admin_email')
+      .single();
 
-    if (error) {
+    if (error || !data) {
       handleSupabaseError(error, 'Error authenticating');
       return false;
     }
 
-    // Auth state changes are handled by the listener in useEffect
-    return true;
+    // Match Vite implementation logic
+    const passwordMatch = password === data.password_hash;
+    let emailMatch = true;
+    if (email && data.admin_email) {
+      emailMatch = email.toLowerCase() === data.admin_email.toLowerCase();
+    }
+
+    if (passwordMatch && emailMatch) {
+      setIsAuthenticated(true);
+      return true;
+    }
+
+    return false;
   };
 
-  const logout = async () => {
-    await supabase.auth.signOut();
-    // Auth state changes are handled by the listener in useEffect
+  const logout = () => {
+    setIsAuthenticated(false);
+    localStorage.removeItem('isAuthenticated');
   };
 
   return (
