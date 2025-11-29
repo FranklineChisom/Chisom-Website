@@ -107,7 +107,7 @@ export default async function Home() {
         
         <div className="max-w-2xl border-l-2 border-accent pl-8 py-2 mb-12">
           <p className="text-lg md:text-xl text-slate-600 font-light leading-relaxed">
-            {siteConfig.tagline}
+            Bridging legal theory and economic reality to advance the harmonization of African trade and capital markets.
           </p>
         </div>
 
