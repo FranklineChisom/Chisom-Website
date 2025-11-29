@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { Copy, Trash2, Check, ChevronLeft, ChevronRight, Users } from 'lucide-react';
+import { Copy, Trash2, Check, ChevronLeft, ChevronRight, Users, Loader2 } from 'lucide-react';
 import { useData } from '@/contexts/DataContext';
 import { useToast } from '@/contexts/ToastContext';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -54,6 +54,7 @@ export default function SubscriberManager() {
     const [page, setPage] = useState(1);
     const [copyStatus, setCopyStatus] = useState<'idle' | 'copied'>('idle');
     const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean, email: string | null }>({ isOpen: false, email: null });
+    const [isRemoving, setIsRemoving] = useState(false);
     const ITEMS_PER_PAGE = 20;
 
     const sortedSubscribers = useMemo(() => {
@@ -78,10 +79,15 @@ export default function SubscriberManager() {
 
     const handleRemove = async () => {
         if (deleteModal.email) {
-            const success = await removeSubscriber(deleteModal.email);
-            setDeleteModal({ isOpen: false, email: null });
-            if (success) showToast('Subscriber removed', 'success');
-            else showToast('Failed to remove subscriber', 'error');
+            setIsRemoving(true);
+            try {
+                const success = await removeSubscriber(deleteModal.email);
+                setDeleteModal({ isOpen: false, email: null });
+                if (success) showToast('Subscriber removed', 'success');
+                else showToast('Failed to remove subscriber', 'error');
+            } finally {
+                setIsRemoving(false);
+            }
         }
     }
 
@@ -101,13 +107,26 @@ export default function SubscriberManager() {
 
             <Modal
                 isOpen={deleteModal.isOpen}
-                onClose={() => setDeleteModal({ isOpen: false, email: null })}
+                onClose={() => !isRemoving && setDeleteModal({ isOpen: false, email: null })}
                 title="Remove Subscriber?"
                 type="danger"
                 actions={
                     <>
-                        <button onClick={() => setDeleteModal({ isOpen: false, email: null })} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-md text-sm font-medium transition-colors">Cancel</button>
-                        <button onClick={handleRemove} className="px-4 py-2 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700 transition-colors shadow-sm">Remove</button>
+                        <button 
+                            onClick={() => setDeleteModal({ isOpen: false, email: null })} 
+                            disabled={isRemoving}
+                            className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-md text-sm font-medium transition-colors disabled:opacity-50"
+                        >
+                            Cancel
+                        </button>
+                        <button 
+                            onClick={handleRemove} 
+                            disabled={isRemoving}
+                            className="px-4 py-2 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700 transition-colors shadow-sm flex items-center gap-2 disabled:opacity-70"
+                        >
+                            {isRemoving && <Loader2 size={14} className="animate-spin" />}
+                            {isRemoving ? 'Removing...' : 'Remove'}
+                        </button>
                     </>
                 }
             >
@@ -166,7 +185,7 @@ export default function SubscriberManager() {
                                     <span className="text-xs text-slate-400 font-mono hidden sm:inline">{new Date(sub.date).toLocaleDateString()}</span>
                                     <button 
                                     onClick={() => confirmRemove(sub.email)}
-                                    className="text-red-600 p-1.5 hover:bg-red-50 rounded-md transition-all"
+                                    className="text-red-600 p-1.5 hover:bg-red-50 rounded-md transition-all opacity-60 group-hover:opacity-100"
                                     title="Remove Subscriber"
                                     >
                                     <Trash2 size={14} />

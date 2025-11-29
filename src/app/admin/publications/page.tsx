@@ -65,6 +65,7 @@ export default function PubManager() {
   const { showToast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [currentPub, setCurrentPub] = useState<Partial<Publication>>({});
   const [page, setPage] = useState(1);
   const ITEMS_PER_PAGE = 8;
@@ -120,10 +121,15 @@ export default function PubManager() {
 
   const handleDelete = async () => {
       if(deleteModal.id) {
-          const success = await deletePublication(deleteModal.id);
-          setDeleteModal({ isOpen: false, id: null });
-          if (success) showToast('Publication deleted', 'success');
-          else showToast('Failed to delete publication', 'error');
+          setIsDeleting(true);
+          try {
+            const success = await deletePublication(deleteModal.id);
+            setDeleteModal({ isOpen: false, id: null });
+            if (success) showToast('Publication deleted', 'success');
+            else showToast('Failed to delete publication', 'error');
+          } finally {
+            setIsDeleting(false);
+          }
       }
   }
 
@@ -134,13 +140,26 @@ export default function PubManager() {
       {/* Delete Modal */}
       <Modal
         isOpen={deleteModal.isOpen}
-        onClose={() => setDeleteModal({ isOpen: false, id: null })}
+        onClose={() => !isDeleting && setDeleteModal({ isOpen: false, id: null })}
         title="Delete Publication?"
         type="danger"
         actions={
             <>
-                <button onClick={() => setDeleteModal({ isOpen: false, id: null })} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-md text-sm font-medium transition-colors">Cancel</button>
-                <button onClick={handleDelete} className="px-4 py-2 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700 transition-colors shadow-sm">Delete Permanently</button>
+                <button 
+                    onClick={() => setDeleteModal({ isOpen: false, id: null })} 
+                    disabled={isDeleting}
+                    className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-md text-sm font-medium transition-colors disabled:opacity-50"
+                >
+                    Cancel
+                </button>
+                <button 
+                    onClick={handleDelete} 
+                    disabled={isDeleting}
+                    className="px-4 py-2 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700 transition-colors shadow-sm flex items-center gap-2 disabled:opacity-70"
+                >
+                    {isDeleting && <Loader2 size={14} className="animate-spin" />}
+                    {isDeleting ? 'Deleting...' : 'Delete Permanently'}
+                </button>
             </>
         }
       >
@@ -258,9 +277,10 @@ export default function PubManager() {
                 type="button" 
                 onClick={() => handleSave(false)} 
                 disabled={isSaving} 
-                className="px-6 py-2.5 border border-slate-300 text-slate-700 rounded-md hover:bg-slate-50 hover:border-slate-400 font-medium disabled:opacity-50 transition-all shadow-sm"
+                className="px-6 py-2.5 border border-slate-300 text-slate-700 rounded-md hover:bg-slate-50 hover:border-slate-400 font-medium disabled:opacity-50 transition-all shadow-sm flex items-center gap-2"
               >
-                  {isSaving ? 'Saving...' : 'Save Draft'}
+                  {isSaving && !currentPub.published && <Loader2 size={16} className="animate-spin" />}
+                  {isSaving && !currentPub.published ? 'Saving...' : 'Save Draft'}
               </button>
               <button 
                 type="button" 
@@ -268,8 +288,8 @@ export default function PubManager() {
                 disabled={isSaving} 
                 className="px-6 py-2.5 bg-primary text-white rounded-md hover:bg-slate-800 font-medium disabled:opacity-50 flex items-center gap-2 shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5"
               >
-                  {isSaving ? <Loader2 size={16} className="animate-spin" /> : null}
-                  {isSaving ? 'Saving...' : (currentPub.published ? 'Update' : 'Publish')}
+                  {isSaving && currentPub.published && <Loader2 size={16} className="animate-spin" />}
+                  {isSaving && currentPub.published ? 'Publishing...' : (currentPub.published ? 'Update' : 'Publish')}
               </button>
             </div>
           </form>

@@ -28,6 +28,7 @@ const NewsletterManager: React.FC = () => {
   const { showToast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [showMediaLibrary, setShowMediaLibrary] = useState(false);
   const [page, setPage] = useState(1);
   
@@ -115,10 +116,15 @@ const NewsletterManager: React.FC = () => {
 
   const handleDelete = async () => {
       if (deleteModal.id) {
-          const success = await deleteNewsletter(deleteModal.id);
-          setDeleteModal({ isOpen: false, id: null });
-          if (success) showToast('Issue deleted', 'success');
-          else showToast('Failed to delete issue', 'error');
+          setIsDeleting(true);
+          try {
+            const success = await deleteNewsletter(deleteModal.id);
+            setDeleteModal({ isOpen: false, id: null });
+            if (success) showToast('Issue deleted', 'success');
+            else showToast('Failed to delete issue', 'error');
+          } finally {
+            setIsDeleting(false);
+          }
       }
   }
 
@@ -143,13 +149,26 @@ const NewsletterManager: React.FC = () => {
        {/* Delete Modal */}
        <Modal
         isOpen={deleteModal.isOpen}
-        onClose={() => setDeleteModal({ isOpen: false, id: null })}
+        onClose={() => !isDeleting && setDeleteModal({ isOpen: false, id: null })}
         title="Delete Newsletter?"
         type="danger"
         actions={
             <>
-                <button onClick={() => setDeleteModal({ isOpen: false, id: null })} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-md text-sm font-medium transition-colors">Cancel</button>
-                <button onClick={handleDelete} className="px-4 py-2 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700 transition-colors shadow-sm">Delete Permanently</button>
+                <button 
+                    onClick={() => setDeleteModal({ isOpen: false, id: null })} 
+                    disabled={isDeleting}
+                    className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-md text-sm font-medium transition-colors disabled:opacity-50"
+                >
+                    Cancel
+                </button>
+                <button 
+                    onClick={handleDelete} 
+                    disabled={isDeleting}
+                    className="px-4 py-2 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700 transition-colors shadow-sm flex items-center gap-2 disabled:opacity-70"
+                >
+                    {isDeleting && <Loader2 size={14} className="animate-spin" />}
+                    {isDeleting ? 'Deleting...' : 'Delete Permanently'}
+                </button>
             </>
         }
       >
@@ -175,7 +194,7 @@ const NewsletterManager: React.FC = () => {
       {isEditing ? (
       <div className="max-w-4xl animate-in fade-in slide-in-from-bottom-4 duration-500">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-sans text-slate-800">{current.title ? 'Edit Issue' : 'New Issue'}</h2>
+          <h2 className="text-2xl font-serif text-slate-800">{current.title ? 'Edit Issue' : 'New Issue'}</h2>
           <div className="flex gap-2">
              <button 
                 onClick={handlePreview} 
@@ -262,8 +281,9 @@ const NewsletterManager: React.FC = () => {
                 type="button" 
                 onClick={() => handleSaveAndClose(false)} 
                 disabled={isSaving} 
-                className="px-6 py-2.5 border border-slate-300 text-slate-700 rounded-md hover:bg-slate-50 hover:border-slate-400 font-medium disabled:opacity-50 transition-all shadow-sm"
+                className="px-6 py-2.5 border border-slate-300 text-slate-700 rounded-md hover:bg-slate-50 hover:border-slate-400 font-medium disabled:opacity-50 transition-all shadow-sm flex items-center gap-2"
             >
+                {isSaving && <Loader2 size={16} className="animate-spin" />}
                 {isSaving ? 'Saving...' : 'Save Draft'}
             </button>
             <button 

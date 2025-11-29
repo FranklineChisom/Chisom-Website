@@ -40,11 +40,13 @@ export default function ProfileManager() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSaving(true);
-        const success = await updateSiteConfig(formData);
-        
-        setIsSaving(false);
-        if (success) showToast('Profile updated successfully!', 'success');
-        else showToast('Failed to update profile', 'error');
+        try {
+            const success = await updateSiteConfig(formData);
+            if (success) showToast('Profile updated successfully!', 'success');
+            else showToast('Failed to update profile', 'error');
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     return (

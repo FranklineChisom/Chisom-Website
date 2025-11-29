@@ -13,9 +13,10 @@ import { useToast } from '@/contexts/ToastContext';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import MediaLibrary from '@/components/MediaLibrary';
 import MarkdownEditor from '@/components/MarkdownEditor'; 
+import Modal from '@/components/Modal'; // Import Modal
 import { formatDistanceToNow, format, isValid } from 'date-fns';
-import { renderToStaticMarkup } from 'react-dom/server'; // Import for HTML generation
-import ReactMarkdown from 'react-markdown'; // Import for Markdown parsing
+import { renderToStaticMarkup } from 'react-dom/server'; 
+import ReactMarkdown from 'react-markdown'; 
 
 // --- Types & Interfaces ---
 type Folder = 'inbox' | 'sent' | 'drafts' | 'trash';
@@ -61,7 +62,6 @@ const getRawDate = (item: any): number => {
 const useKeyboardShortcuts = (handlers: { [key: string]: () => void }) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignore if typing in input or textarea
       if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) return;
       
       const key = e.key.toLowerCase();
@@ -98,14 +98,18 @@ export default function InboxManager() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showMediaLibrary, setShowMediaLibrary] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false); // Mobile sidebar toggle
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Interaction States
+  const [isSending, setIsSending] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
   const [composeData, setComposeData] = useState<ComposeState>({
     to: '', subject: '', body: '', attachments: []
   });
-  const [isSending, setIsSending] = useState(false);
 
-  // --- Data Processing (Memoized for Performance) ---
+  // --- Data Processing ---
   const listItems: ListItem[] = useMemo(() => {
       const lowerQ = searchQuery.toLowerCase();
       const filterText = (t: string | null | undefined) => (t || '').toLowerCase().includes(lowerQ);
@@ -161,26 +165,23 @@ export default function InboxManager() {
     setComposeData({ to: '', subject: '', body: '', attachments: [], ...defaults });
     setIsComposing(true);
     setSelectedId(null);
-    setMobileMenuOpen(false); // Close mobile menu if open
+    setMobileMenuOpen(false);
   }, []);
 
   const handleSelectItem = useCallback((item: ListItem) => {
     setSelectedId(item.id);
     setIsComposing(false);
     
-    // Auto-mark as read for messages in Inbox
     if (item.type === 'message' && !item.read && activeFolder !== 'trash') {
         markMessageRead(item.id);
     }
     
-    // Auto-load draft into composer
     if (activeFolder === 'drafts' && item.type === 'draft') {
         const draft = item.raw as Draft;
         handleCompose({ id: draft.id, to: draft.recipient, subject: draft.subject, body: draft.message });
     }
   }, [activeFolder, handleCompose, markMessageRead]);
 
-  // Bulk Selection Handlers
   const toggleCheck = (id: string, e: React.MouseEvent) => {
       e.stopPropagation();
       const next = new Set(checkedIds);
@@ -194,25 +195,32 @@ export default function InboxManager() {
       else setCheckedIds(new Set(listItems.map(i => i.id)));
   };
 
-  // Bulk Actions
-  const handleBulkDelete = async () => {
+  // --- Delete Logic ---
+  const confirmDelete = () => {
       if (checkedIds.size === 0 && !selectedId) return;
-      const idsToDelete = checkedIds.size > 0 ? Array.from(checkedIds) : [selectedId!];
-      
-      if (!window.confirm(`Are you sure you want to delete ${idsToDelete.length} item(s)?`)) return;
+      setDeleteModalOpen(true);
+  };
 
+  const executeDelete = async () => {
+      setIsDeleting(true);
+      const idsToDelete = checkedIds.size > 0 ? Array.from(checkedIds) : [selectedId!];
       const deleteFunc = activeFolder === 'trash' ? deletePermanently : moveToTrash;
       
-      // We need to know the type for each ID. In a real app, optimize this look up.
-      // Here we iterate visible listItems.
-      for (const id of idsToDelete) {
-          const item = listItems.find(i => i.id === id);
-          if (item) await deleteFunc(item.id, item.type);
+      try {
+        for (const id of idsToDelete) {
+            const item = listItems.find(i => i.id === id);
+            if (item) await deleteFunc(item.id, item.type);
+        }
+        
+        setCheckedIds(new Set());
+        if (checkedIds.has(selectedId || '')) setSelectedId(null);
+        showToast(activeFolder === 'trash' ? 'Deleted permanently' : 'Moved to trash', 'success');
+      } catch (err) {
+          showToast('Failed to delete items', 'error');
+      } finally {
+          setIsDeleting(false);
+          setDeleteModalOpen(false);
       }
-      
-      setCheckedIds(new Set());
-      setSelectedId(null);
-      showToast(activeFolder === 'trash' ? 'Deleted permanently' : 'Moved to trash', 'success');
   };
 
   const handleBulkMarkRead = async (status: boolean) => {
@@ -227,7 +235,6 @@ export default function InboxManager() {
       showToast(status ? 'Marked as read' : 'Marked as unread', 'success');
   };
 
-  // Sending Logic
   const handleSend = async () => {
     if (!composeData.to || !composeData.subject) {
         showToast('Recipient and Subject are required', 'error');
@@ -235,7 +242,6 @@ export default function InboxManager() {
     }
     setIsSending(true);
     try {
-        // Convert Markdown Body to HTML for Email Clients
         const htmlBody = renderToStaticMarkup(
             <ReactMarkdown>{composeData.body}</ReactMarkdown>
         );
@@ -246,8 +252,8 @@ export default function InboxManager() {
             body: JSON.stringify({
                 to: composeData.to,
                 subject: composeData.subject,
-                html: htmlBody, // Send properly formatted HTML
-                text: composeData.body, // Fallback text is the markdown
+                html: htmlBody,
+                text: composeData.body,
                 attachments: composeData.attachments
             })
         });
@@ -281,7 +287,6 @@ export default function InboxManager() {
       if (success) showToast('Draft saved', 'success');
   };
 
-  // Keyboard Shortcuts Config
   useKeyboardShortcuts({
       'arrowdown': () => {
           if (!selectedId && listItems.length > 0) handleSelectItem(listItems[0]);
@@ -294,8 +299,8 @@ export default function InboxManager() {
           const idx = listItems.findIndex(i => i.id === selectedId);
           if (idx > 0) handleSelectItem(listItems[idx - 1]);
       },
-      'delete': handleBulkDelete,
-      'backspace': handleBulkDelete,
+      'delete': confirmDelete,
+      'backspace': confirmDelete,
       'c': () => handleCompose(),
       'r': () => {
           if (selectedItem && selectedItem.type === 'message') {
@@ -304,6 +309,9 @@ export default function InboxManager() {
       },
       'select_all': toggleSelectAll
   });
+
+  // Calculate count for modal text
+  const selectedCount = checkedIds.size || (selectedId ? 1 : 0);
 
   return (
     <div className="flex h-[calc(100vh-100px)] bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden relative">
@@ -315,10 +323,42 @@ export default function InboxManager() {
         }} onClose={() => setShowMediaLibrary(false)} />
       )}
 
-      {/* --- Sidebar (Folders) --- */}
-      {/* Mobile Drawer Overlay */}
+      {/* Confirmation Modal */}
+      <Modal
+        isOpen={deleteModalOpen}
+        onClose={() => !isDeleting && setDeleteModalOpen(false)}
+        title={activeFolder === 'trash' ? "Delete Permanently?" : "Move to Trash?"}
+        type="danger"
+        actions={
+            <>
+                <button 
+                    onClick={() => setDeleteModalOpen(false)} 
+                    disabled={isDeleting}
+                    className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-md text-sm font-medium transition-colors disabled:opacity-50"
+                >
+                    Cancel
+                </button>
+                <button 
+                    onClick={executeDelete} 
+                    disabled={isDeleting}
+                    className="px-4 py-2 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700 transition-colors shadow-sm flex items-center gap-2 disabled:opacity-70"
+                >
+                    {isDeleting && <Loader2 size={14} className="animate-spin" />}
+                    {activeFolder === 'trash' ? 'Delete Permanently' : 'Move to Trash'}
+                </button>
+            </>
+        }
+      >
+        <p className="text-sm text-slate-600">
+            {activeFolder === 'trash' 
+                ? `You are about to permanently delete ${selectedCount} item${selectedCount > 1 ? 's' : ''}. This action cannot be undone.`
+                : `Are you sure you want to move ${selectedCount} item${selectedCount > 1 ? 's' : ''} to the trash?`
+            }
+        </p>
+      </Modal>
+
+      {/* Sidebar (Folders) */}
       <div className={`absolute inset-0 bg-black/50 z-20 md:hidden transition-opacity ${mobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} onClick={() => setMobileMenuOpen(false)} />
-      
       <div className={`absolute md:relative z-30 w-64 bg-slate-50 border-r border-slate-200 flex flex-col h-full transition-transform duration-300 transform ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
         <div className="p-4">
             <button onClick={() => handleCompose()} className="w-full bg-primary text-white py-3 rounded-lg flex items-center justify-center gap-2 font-medium hover:bg-slate-800 transition-colors shadow-sm active:scale-95">
@@ -359,7 +399,7 @@ export default function InboxManager() {
         </nav>
       </div>
 
-      {/* --- List View --- */}
+      {/* List View */}
       <div className={`w-full md:w-80 border-r border-slate-200 flex flex-col bg-white ${selectedId || isComposing ? 'hidden md:flex' : 'flex'}`}>
         <div className="p-4 border-b border-slate-100 flex gap-2 items-center">
             <button className="md:hidden mr-2 text-slate-500" onClick={() => setMobileMenuOpen(true)}>
@@ -383,7 +423,7 @@ export default function InboxManager() {
                             <button onClick={() => handleBulkMarkRead(false)} className="p-1.5 hover:bg-white hover:text-primary rounded border border-transparent hover:border-slate-200" title="Mark Unread"><Mail size={14} /></button>
                         </>
                     )}
-                    <button onClick={handleBulkDelete} className="p-1.5 hover:bg-red-50 hover:text-red-600 rounded border border-transparent hover:border-red-100" title="Delete"><Trash2 size={14} /></button>
+                    <button onClick={confirmDelete} className="p-1.5 hover:bg-red-50 hover:text-red-600 rounded border border-transparent hover:border-red-100" title="Delete"><Trash2 size={14} /></button>
                 </div>
             </div>
         )}
@@ -391,14 +431,11 @@ export default function InboxManager() {
         <div className="flex-1 overflow-y-auto">
             {listItems.length === 0 ? <div className="p-12 text-center text-slate-400 text-sm flex flex-col items-center"><Inbox size={32} className="mb-2 opacity-20" /><span>No messages</span></div> : listItems.map(item => (
                 <div key={item.id} onClick={() => handleSelectItem(item)} className={`group relative p-4 border-b border-slate-100 cursor-pointer transition-all hover:bg-slate-50 ${selectedId === item.id ? 'bg-blue-50/50 border-l-4 border-l-primary' : 'border-l-4 border-l-transparent'} ${!item.read ? 'bg-slate-50' : ''}`}>
-                    
-                    {/* Checkbox Overlay */}
                     <div className="absolute left-2 top-4 opacity-70 group-hover:opacity-100 transition-opacity z-10" onClick={(e) => e.stopPropagation()}>
                         <button onClick={(e) => toggleCheck(item.id, e)} className="text-slate-400 hover:text-primary">
                             {checkedIds.has(item.id) ? <CheckSquare size={16} className="text-primary" /> : <Square size={16} />}
                         </button>
                     </div>
-
                     <div className="flex justify-between items-start mb-1 pl-4 group-hover:pl-6 transition-all duration-200">
                         <h4 className={`text-sm truncate pr-2 flex items-center gap-1.5 ${!item.read ? 'font-bold text-slate-900' : 'font-medium text-slate-700'}`}>
                             {item.replied && <CornerUpLeft size={12} className="text-green-500 flex-shrink-0" />}
@@ -414,7 +451,7 @@ export default function InboxManager() {
         </div>
       </div>
 
-      {/* --- Reading Pane / Composer --- */}
+      {/* Reading Pane / Composer */}
       <div className={`flex-1 flex flex-col bg-white min-w-0 ${!selectedId && !isComposing ? 'hidden md:flex' : 'flex'}`}>
         {isComposing ? (
             <div className="flex flex-col h-full animate-in fade-in zoom-in-95 duration-200">
@@ -434,8 +471,6 @@ export default function InboxManager() {
                         <label className="w-16 text-sm font-medium text-slate-500">Subject:</label>
                         <input type="text" value={composeData.subject} onChange={e => setComposeData({...composeData, subject: e.target.value})} className="flex-1 border-b border-slate-200 py-2 focus:border-primary focus:outline-none text-sm font-medium bg-transparent transition-colors" placeholder="Subject line" />
                     </div>
-                    
-                    {/* Rich Text Editor Replacement */}
                     <div className="flex-1 mt-4">
                         <MarkdownEditor 
                             value={composeData.body}
@@ -444,7 +479,6 @@ export default function InboxManager() {
                             rows={15}
                         />
                     </div>
-                    
                     {composeData.attachments.length > 0 && (
                         <div className="flex flex-wrap gap-2 mt-2">
                             {composeData.attachments.map((url, i) => (
@@ -460,14 +494,18 @@ export default function InboxManager() {
                     <button onClick={() => setShowMediaLibrary(true)} className="p-2 hover:bg-slate-200 rounded-full transition-colors text-slate-500 flex items-center gap-2 text-sm" title="Attach File">
                         <Paperclip size={18} /> Attach
                     </button>
-                    <button onClick={handleSend} disabled={isSending} className="bg-primary text-white px-8 py-2.5 rounded-md font-medium hover:bg-slate-800 transition-all flex items-center gap-2 disabled:opacity-70 shadow-sm hover:shadow-md transform active:scale-95">
-                        {isSending ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />} {isSending ? 'Sending...' : 'Send Message'}
+                    <button 
+                        onClick={handleSend} 
+                        disabled={isSending} 
+                        className="bg-primary text-white px-8 py-2.5 rounded-md font-medium hover:bg-slate-800 transition-all flex items-center gap-2 disabled:opacity-70 shadow-sm hover:shadow-md transform active:scale-95"
+                    >
+                        {isSending ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />} 
+                        {isSending ? 'Sending...' : 'Send Message'}
                     </button>
                 </div>
             </div>
         ) : selectedItem ? (
             <div className="flex flex-col h-full animate-in fade-in duration-300">
-                {/* Message Header */}
                 <div className="px-8 py-6 border-b border-slate-100 bg-slate-50/30 sticky top-0 z-10 backdrop-blur-sm">
                     <div className="flex justify-between items-start mb-4">
                         <div className="flex items-center gap-2">
@@ -476,8 +514,6 @@ export default function InboxManager() {
                             </button>
                             <h2 className="text-xl md:text-2xl font-serif text-slate-900 leading-tight">{selectedItem.subtitle}</h2>
                         </div>
-                        
-                        {/* Toolbar */}
                         <div className="flex gap-2">
                             {activeFolder === 'inbox' && (
                                 <>
@@ -486,10 +522,9 @@ export default function InboxManager() {
                                 </>
                             )}
                             {activeFolder === 'trash' ? <button onClick={() => restoreFromTrash(selectedId!, selectedItem.type)} className="p-2 text-slate-500 hover:text-green-600 hover:bg-green-50 rounded-md transition-colors" title="Restore"><RotateCcw size={20} /></button> : null}
-                            <button onClick={handleBulkDelete} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors" title={activeFolder === 'trash' ? "Delete Permanently" : "Move to Trash"}><Trash2 size={20} /></button>
+                            <button onClick={confirmDelete} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors" title={activeFolder === 'trash' ? "Delete Permanently" : "Move to Trash"}><Trash2 size={20} /></button>
                         </div>
                     </div>
-
                     <div className="flex items-center gap-4">
                         <div className="w-10 h-10 bg-gradient-to-br from-slate-100 to-slate-200 rounded-full flex items-center justify-center text-slate-500 border border-slate-200 shadow-sm"><User size={20} /></div>
                         <div>
@@ -505,11 +540,8 @@ export default function InboxManager() {
                         </div>
                     </div>
                 </div>
-
-                {/* Message Body */}
                 <div className="flex-1 p-8 overflow-y-auto">
                     <div className="prose prose-slate max-w-none text-sm leading-7 text-slate-700">
-                        {/* Rendering logic based on type */}
                         {selectedItem.type === 'message' && (selectedItem.raw as ContactMessage).message.split('\n').map((line, i) => <p key={i} className="mb-2 min-h-[1em]">{line}</p>)}
                         {(selectedItem.type === 'sent' || selectedItem.type === 'draft') && (
                             <div className="whitespace-pre-wrap font-sans text-slate-700">
@@ -519,7 +551,6 @@ export default function InboxManager() {
                             </div>
                         )}
                     </div>
-                    {/* Render Attachments */}
                     {(selectedItem.raw.attachments && selectedItem.raw.attachments.length > 0) && (
                         <div className="mt-8 pt-6 border-t border-slate-100">
                             <h5 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2">

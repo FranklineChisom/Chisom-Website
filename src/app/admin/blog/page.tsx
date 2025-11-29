@@ -28,6 +28,7 @@ export default function BlogManager() {
   const { showToast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [showMediaLibrary, setShowMediaLibrary] = useState(false);
   const [page, setPage] = useState(1);
   
@@ -123,12 +124,17 @@ export default function BlogManager() {
 
   const handleDelete = async () => {
       if (deleteModal.id) {
-          const success = await deleteBlogPost(deleteModal.id);
-          setDeleteModal({ isOpen: false, id: null });
-          if (success) {
-              showToast('Article deleted', 'success');
-          } else {
-              showToast('Failed to delete article', 'error');
+          setIsDeleting(true);
+          try {
+            const success = await deleteBlogPost(deleteModal.id);
+            if (success) {
+                showToast('Article deleted', 'success');
+                setDeleteModal({ isOpen: false, id: null });
+            } else {
+                showToast('Failed to delete article', 'error');
+            }
+          } finally {
+            setIsDeleting(false);
           }
       }
   };
@@ -154,13 +160,26 @@ export default function BlogManager() {
       {/* Delete Confirmation Modal */}
       <Modal
         isOpen={deleteModal.isOpen}
-        onClose={() => setDeleteModal({ isOpen: false, id: null })}
+        onClose={() => !isDeleting && setDeleteModal({ isOpen: false, id: null })}
         title="Delete Article?"
         type="danger"
         actions={
             <>
-                <button onClick={() => setDeleteModal({ isOpen: false, id: null })} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-md text-sm font-medium transition-colors">Cancel</button>
-                <button onClick={handleDelete} className="px-4 py-2 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700 transition-colors shadow-sm">Delete Permanently</button>
+                <button 
+                    onClick={() => setDeleteModal({ isOpen: false, id: null })} 
+                    disabled={isDeleting}
+                    className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-md text-sm font-medium transition-colors disabled:opacity-50"
+                >
+                    Cancel
+                </button>
+                <button 
+                    onClick={handleDelete} 
+                    disabled={isDeleting}
+                    className="px-4 py-2 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700 transition-colors shadow-sm flex items-center gap-2 disabled:opacity-70"
+                >
+                    {isDeleting && <Loader2 size={14} className="animate-spin" />}
+                    {isDeleting ? 'Deleting...' : 'Delete Permanently'}
+                </button>
             </>
         }
       >
@@ -285,8 +304,9 @@ export default function BlogManager() {
                 type="button"
                 onClick={() => handleSaveAndClose(false)}
                 disabled={isSaving}
-                className="px-6 py-2.5 border border-slate-300 text-slate-700 rounded-md hover:bg-slate-50 hover:border-slate-400 font-medium disabled:opacity-50 transition-all shadow-sm"
+                className="px-6 py-2.5 border border-slate-300 text-slate-700 rounded-md hover:bg-slate-50 hover:border-slate-400 font-medium disabled:opacity-50 transition-all shadow-sm flex items-center gap-2"
             >
+                {isSaving && <Loader2 size={16} className="animate-spin" />}
                 {isSaving ? 'Saving...' : 'Save Draft'}
             </button>
             <button 
