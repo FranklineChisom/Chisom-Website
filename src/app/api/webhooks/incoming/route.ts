@@ -2,9 +2,11 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 // Initialize Supabase Admin Client
-// We use ANON KEY here assuming RLS allows insert. Ideally use SERVICE_ROLE key for backend scripts.
+// We use SERVICE_ROLE_KEY here to bypass RLS policies.
+// This is critical for webhooks as they run server-side without a user session.
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!; 
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!; 
+
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 export async function POST(request: Request) {

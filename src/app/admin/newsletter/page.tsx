@@ -175,7 +175,7 @@ const NewsletterManager: React.FC = () => {
       {isEditing ? (
       <div className="max-w-4xl animate-in fade-in slide-in-from-bottom-4 duration-500">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-serif text-slate-800">{current.title ? 'Edit Issue' : 'New Issue'}</h2>
+          <h2 className="text-2xl font-sans text-slate-800">{current.title ? 'Edit Issue' : 'New Issue'}</h2>
           <div className="flex gap-2">
              <button 
                 onClick={handlePreview} 

@@ -116,7 +116,7 @@ const Analytics: React.FC = () => {
         
         {/* Radar: Topic Balance */}
         <div className="bg-white p-6 rounded-none shadow-sm border border-slate-100 flex flex-col">
-            <h3 className="font-serif text-lg text-primary mb-4 flex items-center gap-2">
+            <h3 className="font-sans text-lg text-primary mb-4 flex items-center gap-2">
                 <Activity size={18} /> Topic Balance
             </h3>
             <div className="flex-1 min-h-[250px]">
@@ -140,7 +140,7 @@ const Analytics: React.FC = () => {
 
         {/* Bar: Publishing Schedule */}
         <div className="bg-white p-6 rounded-none shadow-sm border border-slate-100 flex flex-col">
-            <h3 className="font-serif text-lg text-primary mb-4 flex items-center gap-2">
+            <h3 className="font-sans text-lg text-primary mb-4 flex items-center gap-2">
                 <FileText size={18} /> Publishing Habits
             </h3>
             <div className="flex-1 min-h-[250px]">
@@ -160,7 +160,7 @@ const Analytics: React.FC = () => {
 
         {/* Pie: Content Mix */}
         <div className="bg-white p-6 rounded-none shadow-sm border border-slate-100 flex flex-col">
-            <h3 className="font-serif text-lg text-primary mb-4">Content Mix</h3>
+            <h3 className="font-sans text-lg text-primary mb-4">Content Mix</h3>
             <div className="flex-1 min-h-[250px]">
                 <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
@@ -187,7 +187,7 @@ const Analytics: React.FC = () => {
 
       {/* --- SECTION 2: PRODUCTIVITY --- */}
       <div className="bg-white p-6 rounded-none shadow-sm border border-slate-100">
-        <h3 className="font-serif text-lg text-primary mb-6">Cumulative Writing Volume (Words)</h3>
+        <h3 className="font-sans text-lg text-primary mb-6">Cumulative Writing Volume (Words)</h3>
         <div className="h-72 w-full">
             <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={productivityData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
@@ -211,7 +211,7 @@ const Analytics: React.FC = () => {
       <div className="bg-slate-50 p-8 border border-slate-200 rounded-sm">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
             <div>
-                <h3 className="font-serif text-2xl text-primary flex items-center gap-2">
+                <h3 className="font-sans text-2xl text-primary flex items-center gap-2">
                     <Globe size={24} className="text-accent" /> 
                     Web Analytics Integration
                 </h3>

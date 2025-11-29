@@ -17,8 +17,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
     }
 
-    const fromEmail = 'contact@franklinechisom.com'; 
-    const adminEmail = process.env.ADMIN_EMAIL || 'contact@franklinechisom.com';
+    const fromEmail = 'web@franklinechisom.com'; 
+    const adminEmail = process.env.ADMIN_EMAIL || 'franklinechisom.ebere@gmail.com';
 
     // Prepare attachments for Resend
     // We expect 'attachments' to be an array of URLs (strings) passed from the frontend

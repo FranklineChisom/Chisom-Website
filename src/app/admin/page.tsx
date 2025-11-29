@@ -216,6 +216,7 @@ export default function AdminDashboard() {
         {/* Messages Card - Modified to show Unread as primary metric */}
         <div className="bg-white p-6 rounded-none shadow-sm border border-slate-100 relative group overflow-hidden">
           <div className="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+             <Mail size={48} className="text-primary" />
           </div>
           <div className="text-slate-500 text-sm font-medium uppercase tracking-wider mb-2">Unread Messages</div>
           <div className="text-4xl font-bold text-primary">{counts.messages.unread}</div>

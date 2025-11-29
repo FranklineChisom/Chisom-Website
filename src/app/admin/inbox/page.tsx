@@ -1,20 +1,21 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { 
   Mail, Inbox, Send, FileText, Trash2, Edit3, Search, 
-  ChevronLeft, ChevronRight, RefreshCw, MoreHorizontal, 
-  CornerUpLeft, Check, X, Loader2, User, Paperclip, 
-  RotateCcw, AlertOctagon, CheckCircle2, MailOpen, File,
-  Menu, Square, CheckSquare
+  ChevronLeft, ChevronRight, RefreshCw, 
+  CornerUpLeft, CheckCircle2, MailOpen, File,
+  Menu, Square, CheckSquare, Paperclip, AlertOctagon, RotateCcw, Loader2, User, X
 } from 'lucide-react';
 import { ContactMessage, Draft, SentEmail } from '@/types';
 import { useData } from '@/contexts/DataContext';
 import { useToast } from '@/contexts/ToastContext';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import MediaLibrary from '@/components/MediaLibrary';
-import MarkdownEditor from '@/components/MarkdownEditor'; // Using Rich Text Editor
+import MarkdownEditor from '@/components/MarkdownEditor'; 
 import { formatDistanceToNow, format, isValid } from 'date-fns';
+import { renderToStaticMarkup } from 'react-dom/server'; // Import for HTML generation
+import ReactMarkdown from 'react-markdown'; // Import for Markdown parsing
 
 // --- Types & Interfaces ---
 type Folder = 'inbox' | 'sent' | 'drafts' | 'trash';
@@ -234,14 +235,19 @@ export default function InboxManager() {
     }
     setIsSending(true);
     try {
+        // Convert Markdown Body to HTML for Email Clients
+        const htmlBody = renderToStaticMarkup(
+            <ReactMarkdown>{composeData.body}</ReactMarkdown>
+        );
+
         const res = await fetch('/api/resend', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 to: composeData.to,
                 subject: composeData.subject,
-                html: composeData.body.replace(/\n/g, '<br/>'), // Basic conversion, Markdown editor handles HTML better usually
-                text: composeData.body,
+                html: htmlBody, // Send properly formatted HTML
+                text: composeData.body, // Fallback text is the markdown
                 attachments: composeData.attachments
             })
         });
@@ -377,7 +383,7 @@ export default function InboxManager() {
                             <button onClick={() => handleBulkMarkRead(false)} className="p-1.5 hover:bg-white hover:text-primary rounded border border-transparent hover:border-slate-200" title="Mark Unread"><Mail size={14} /></button>
                         </>
                     )}
-                    <button onClick={handleBulkDelete} className="p-1.5 hover:bg-red-50 text-red-600 rounded border border-transparent hover:border-red-100" title="Delete"><Trash2 size={14} /></button>
+                    <button onClick={handleBulkDelete} className="p-1.5 hover:bg-red-50 hover:text-red-600 rounded border border-transparent hover:border-red-100" title="Delete"><Trash2 size={14} /></button>
                 </div>
             </div>
         )}
@@ -507,7 +513,9 @@ export default function InboxManager() {
                         {selectedItem.type === 'message' && (selectedItem.raw as ContactMessage).message.split('\n').map((line, i) => <p key={i} className="mb-2 min-h-[1em]">{line}</p>)}
                         {(selectedItem.type === 'sent' || selectedItem.type === 'draft') && (
                             <div className="whitespace-pre-wrap font-sans text-slate-700">
+                                <ReactMarkdown>
                                 {(selectedItem.type === 'draft' ? (selectedItem.raw as Draft).message : (selectedItem.raw as SentEmail).text || 'No text content available.')}
+                                </ReactMarkdown>
                             </div>
                         )}
                     </div>

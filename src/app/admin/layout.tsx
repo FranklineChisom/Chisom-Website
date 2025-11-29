@@ -107,7 +107,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <div className="min-h-screen bg-slate-50 flex font-sans">
       {/* Mobile Header */}
       <div className="md:hidden fixed top-0 left-0 right-0 bg-primary text-white p-4 flex justify-between items-center z-20 shadow-md">
-        <div className="font-serif font-bold">Admin Console</div>
+        <div className="font-sans font-bold">Admin Console</div>
         <button onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
             {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
         </button>

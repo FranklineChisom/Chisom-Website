@@ -165,7 +165,7 @@ const BlogManager: React.FC = () => {
       {isEditing ? (
         <div className="max-w-4xl">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-serif text-slate-800">
+            <h2 className="text-2xl font-sans text-slate-800">
               {currentPost.title ? "Edit Post" : "New Post"}
             </h2>
             <div className="flex gap-2">
@@ -325,7 +325,7 @@ const BlogManager: React.FC = () => {
       ) : (
         <div>
           <div className="flex justify-between items-center mb-8">
-            <h2 className="text-3xl font-serif text-slate-800">Articles</h2>
+            <h2 className="text-3xl font-sans text-slate-800">Articles</h2>
             <button
               onClick={handleCreate}
               className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-none hover:bg-slate-800 transition-colors"
