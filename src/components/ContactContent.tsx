@@ -6,19 +6,20 @@ import { useData } from '@/contexts/DataContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEnvelope, faLocationDot, faCheck, faGraduationCap, faBookmark } from '@fortawesome/free-solid-svg-icons';
 import { faLinkedin } from '@fortawesome/free-brands-svg-icons';
+import { X } from 'lucide-react';
 
 const ContactContent: React.FC = () => {
   const { siteConfig, addMessage } = useData();
   const [formData, setFormData] = useState({ name: '', email: '', subject: 'Research Inquiry', message: '' });
   const [status, setStatus] = useState<'idle' | 'success'>('idle');
+  const [isCustomSubject, setIsCustomSubject] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.email || !formData.message) return;
+    if (!formData.name || !formData.email || !formData.message || !formData.subject) return;
 
     addMessage({
         id: Date.now().toString(),
-        // FIX: Use ISO string for consistent date parsing across all browsers/systems
         date: new Date().toISOString(),
         ...formData,
         read: false
@@ -26,7 +27,23 @@ const ContactContent: React.FC = () => {
 
     setStatus('success');
     setFormData({ name: '', email: '', subject: 'Research Inquiry', message: '' });
+    setIsCustomSubject(false); // Reset subject mode
     setTimeout(() => setStatus('idle'), 5000);
+  };
+
+  const handleSubjectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    if (value === 'Other') {
+      setIsCustomSubject(true);
+      setFormData({ ...formData, subject: '' });
+    } else {
+      setFormData({ ...formData, subject: value });
+    }
+  };
+
+  const resetSubject = () => {
+    setIsCustomSubject(false);
+    setFormData({ ...formData, subject: 'Research Inquiry' });
   };
 
   const BoxIcon: React.FC<{ href: string; icon: React.ReactNode; label: string }> = ({ href, icon, label }) => (
@@ -131,18 +148,41 @@ const ContactContent: React.FC = () => {
                 />
                 </div>
                 <div>
-                <label htmlFor="subject" className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Subject</label>
-                <select 
-                    id="subject" 
-                    value={formData.subject}
-                    onChange={e => setFormData({...formData, subject: e.target.value})}
-                    className="w-full bg-white border border-slate-200 px-4 py-3 focus:outline-none focus:border-primary transition-colors text-slate-800 rounded-none"
-                >
-                    <option>Research Inquiry</option>
-                    <option>Speaking Engagement</option>
-                    <option>Media/Press</option>
-                    <option>Other</option>
-                </select>
+                  <label htmlFor="subject" className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Subject</label>
+                  {!isCustomSubject ? (
+                    <select 
+                        id="subject" 
+                        value={formData.subject}
+                        onChange={handleSubjectChange}
+                        className="w-full bg-white border border-slate-200 px-4 py-3 focus:outline-none focus:border-primary transition-colors text-slate-800 rounded-none"
+                    >
+                        <option>Research Inquiry</option>
+                        <option>Speaking Engagement</option>
+                        <option>Media/Press</option>
+                        <option>Other</option>
+                    </select>
+                  ) : (
+                    <div className="relative">
+                      <input 
+                        type="text" 
+                        id="subject" 
+                        value={formData.subject}
+                        onChange={e => setFormData({...formData, subject: e.target.value})}
+                        className="w-full bg-white border border-slate-200 px-4 py-3 pr-10 focus:outline-none focus:border-primary transition-colors text-slate-800 rounded-none animate-in fade-in"
+                        placeholder="Specify your subject..."
+                        required
+                        autoFocus
+                      />
+                      <button 
+                        type="button" 
+                        onClick={resetSubject}
+                        className="absolute right-0 top-0 bottom-0 px-3 text-slate-400 hover:text-primary transition-colors"
+                        title="Back to list"
+                      >
+                        <X size={18} />
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <div>
                 <label htmlFor="message" className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Message</label>
