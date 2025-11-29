@@ -92,12 +92,8 @@ export default function AdminDashboard() {
       const { data: pubMeta } = await supabase.from('publications').select('year');
 
       // --- Process Subscriber Data ---
-      if (subDates && subDates.length > 0) {
-        const subChartData = processSubscriberGrowth(subDates);
-        setSubscriberData(subChartData);
-      } else {
-        setSubscriberData([{ name: 'No Data', count: 0 }]);
-      }
+      const subChartData = processSubscriberGrowth(subDates || []);
+      setSubscriberData(subChartData);
 
       // --- Process Productivity (Word Count) ---
       const allContent = [
@@ -142,27 +138,50 @@ export default function AdminDashboard() {
   };
 
   const processSubscriberGrowth = (data: any[]) => {
-      const timestamps = data.map(s => new Date(s.date).getTime()).filter(t => !isNaN(t));
-      if (timestamps.length === 0) return [];
-      
-      const chart = [];
-      const now = Date.now();
-      let current = new Date(timestamps[0]);
-      current.setMonth(current.getMonth() - 1);
-      current.setDate(1); 
+    // 1. Parse and sort valid dates
+    const timestamps = data
+      .map((s) => new Date(s.date).getTime())
+      .filter((t) => !isNaN(t))
+      .sort((a, b) => a - b);
 
-      while (current.getTime() < now || chart.length < 2) {
-         const nextMonth = new Date(current);
-         nextMonth.setMonth(current.getMonth() + 1);
-         const count = timestamps.filter(t => t < nextMonth.getTime()).length;
-         chart.push({
-           name: current.toLocaleString('default', { month: 'short', year: '2-digit' }),
-           count: count
-         });
-         current.setMonth(current.getMonth() + 1);
-         if (chart.length > 48) break; 
+    const now = new Date();
+    // 2. Determine start date: Earliest subscriber OR 6 months ago (whichever is earlier)
+    // This ensures we always show at least a 6-month timeline
+    let start = new Date();
+    start.setMonth(now.getMonth() - 5); 
+    start.setDate(1);
+    start.setHours(0,0,0,0);
+
+    if (timestamps.length > 0) {
+      const firstSub = new Date(timestamps[0]);
+      firstSub.setDate(1);
+      firstSub.setHours(0,0,0,0);
+      // If the first subscriber is older than 6 months, start from there
+      if (firstSub < start) {
+          start = firstSub;
       }
-      return chart;
+    }
+
+    const chart = [];
+    const current = new Date(start);
+
+    // 3. Iterate month by month
+    while (current <= now) {
+       const monthEnd = new Date(current.getFullYear(), current.getMonth() + 1, 1); // Start of next month
+       
+       // Cumulative count: All subs created before the start of the *next* month
+       const count = timestamps.filter(t => t < monthEnd.getTime()).length;
+       
+       chart.push({
+         name: current.toLocaleString('default', { month: 'short', year: '2-digit' }),
+         count: count
+       });
+       
+       // Increment month safely
+       current.setMonth(current.getMonth() + 1);
+    }
+    
+    return chart;
   };
 
   const handleSaveUrl = async () => {
