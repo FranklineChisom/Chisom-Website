@@ -9,7 +9,9 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import NewsletterSubscribeBox from '@/components/NewsletterSubscribeBox';
 
-export const revalidate = 60;
+// Force dynamic rendering so updates appear immediately
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 interface Props {
   params: Promise<{ slug: string }>;

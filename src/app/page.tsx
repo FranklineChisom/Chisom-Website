@@ -1,11 +1,15 @@
 import React from 'react';
 import Link from 'next/link';
-import { ArrowRight, ChevronRight, Mail } from 'lucide-react';
+import { ArrowRight, Mail } from 'lucide-react';
 import Section from '@/components/Section';
 import { supabase } from '@/lib/supabase';
 import NewsletterForm from '@/components/NewsletterForm';
 import { SITE_CONFIG } from '@/constants';
 import { BlogPost, Newsletter, SiteConfig } from '@/types';
+
+// Force the page to be dynamic and fetch fresh data on every request
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 // Fetch data
 async function getData() {
@@ -45,7 +49,7 @@ async function getData() {
     readTime: p.read_time,
     coverImage: p.cover_image,
     published: p.published
-  })) : []; // Empty array if no posts
+  })) : [];
 
   const { data: dbNewsletters } = await supabase
     .from('newsletters')
@@ -63,7 +67,7 @@ async function getData() {
     content: n.content,
     coverImage: n.cover_image,
     published: n.published
-  })) : []; // Empty array if no newsletters
+  })) : [];
 
   return { siteConfig, recentPosts, recentNewsletters };
 }

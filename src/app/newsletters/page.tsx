@@ -4,6 +4,10 @@ import { Newsletter } from '@/types';
 import type { Metadata } from 'next';
 import NewsletterList from '@/components/NewsletterList';
 
+// Force dynamic rendering to ensure new newsletters appear immediately
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export const metadata: Metadata = {
   title: 'Newsletter Archive',
   description: 'Browse past issues on law, policy, and the economic future of Africa.',
@@ -22,7 +26,7 @@ async function getNewsletters() {
     .order('date', { ascending: false });
 
   if (!data || data.length === 0) {
-    return []; // No fallback, return empty array
+    return []; 
   }
 
   return data.map((n: any) => ({
