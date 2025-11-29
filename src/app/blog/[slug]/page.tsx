@@ -2,7 +2,6 @@ import React from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Clock, Calendar } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
-import Section from '@/components/Section';
 import { supabase } from '@/lib/supabase';
 import { BLOG_POSTS } from '@/constants';
 import { BlogPost } from '@/types';
@@ -101,7 +100,8 @@ export default async function BlogPostPage(props: Props) {
 
   return (
     <div className="max-w-3xl mx-auto px-6 pt-8 pb-20">
-      <Section>
+      {/* Removed Section wrapper to ensure immediate visibility for SEO */}
+      <div className="animate-in fade-in duration-500">
         <Link href="/blog" className="inline-flex items-center text-sm text-slate-500 hover:text-primary mb-8 transition-colors">
           <ArrowLeft size={16} className="mr-2" /> Back to Articles
         </Link>
@@ -148,7 +148,7 @@ export default async function BlogPostPage(props: Props) {
                  Frankline Chisom Ebere explores the convergence of international finance, dispute resolution, and the digital economy.
              </p>
         </div>
-      </Section>
+      </div>
     </div>
   );
 }

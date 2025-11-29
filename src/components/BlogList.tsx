@@ -60,39 +60,38 @@ const BlogList: React.FC<BlogListProps> = ({ initialPosts }) => {
         />
       </Section>
 
-      <Section delay={100}>
-        <div className="grid gap-16">
-          {currentPosts.length > 0 ? currentPosts.map((post) => (
-            <article key={post.id} className="group flex flex-col md:grid md:grid-cols-4 gap-6 items-start">
-              <div className="md:col-span-1 text-sm text-slate-400 font-mono pt-1">
-                {post.date}
-                <div className="mt-2 text-xs text-accent uppercase tracking-wider font-semibold">{post.category}</div>
-              </div>
-              <div className="md:col-span-3">
-                <Link href={`/blog/${post.slug || post.id}`}>
-                  <h2 className="font-serif text-2xl text-primary font-medium mb-3 group-hover:text-teal-700 transition-colors cursor-pointer">
-                    {post.title}
-                  </h2>
-                </Link>
-                <p className="text-slate-600 leading-relaxed mb-4">
-                  {post.excerpt}
-                </p>
-                <Link href={`/blog/${post.slug || post.id}`} className="inline-flex items-center text-sm font-medium text-slate-800 hover:text-primary transition-colors">
-                  Read Article <ArrowRight size={16} className="ml-1 transition-transform group-hover:translate-x-1" />
-                </Link>
-              </div>
-            </article>
-          )) : (
-            <p className="text-slate-500 italic">No articles published yet.</p>
-          )}
-        </div>
+      {/* Removed Section wrapper for immediate listing visibility */}
+      <div className="grid gap-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        {currentPosts.length > 0 ? currentPosts.map((post) => (
+          <article key={post.id} className="group flex flex-col md:grid md:grid-cols-4 gap-6 items-start">
+            <div className="md:col-span-1 text-sm text-slate-400 font-mono pt-1">
+              {post.date}
+              <div className="mt-2 text-xs text-accent uppercase tracking-wider font-semibold">{post.category}</div>
+            </div>
+            <div className="md:col-span-3">
+              <Link href={`/blog/${post.slug || post.id}`}>
+                <h2 className="font-serif text-2xl text-primary font-medium mb-3 group-hover:text-teal-700 transition-colors cursor-pointer">
+                  {post.title}
+                </h2>
+              </Link>
+              <p className="text-slate-600 leading-relaxed mb-4">
+                {post.excerpt}
+              </p>
+              <Link href={`/blog/${post.slug || post.id}`} className="inline-flex items-center text-sm font-medium text-slate-800 hover:text-primary transition-colors">
+                Read Article <ArrowRight size={16} className="ml-1 transition-transform group-hover:translate-x-1" />
+              </Link>
+            </div>
+          </article>
+        )) : (
+          <p className="text-slate-500 italic">No articles published yet.</p>
+        )}
+      </div>
 
-        <Pagination 
-          currentPage={currentPage} 
-          totalPages={totalPages} 
-          onPageChange={handlePageChange} 
-        />
-      </Section>
+      <Pagination 
+        currentPage={currentPage} 
+        totalPages={totalPages} 
+        onPageChange={handlePageChange} 
+      />
 
       <Section delay={200} className="border-t border-slate-100 pt-12 mt-12">
         <div className="bg-slate-50 p-8 flex flex-col md:flex-row justify-between items-center gap-6 rounded-sm">

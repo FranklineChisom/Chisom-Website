@@ -49,34 +49,33 @@ const NewsletterList: React.FC<NewsletterListProps> = ({ initialNewsletters }) =
         />
       </Section>
 
-      <Section delay={100}>
-        <div className="grid gap-12">
-          {currentItems.length > 0 ? currentItems.map((item) => (
-            <article key={item.id} className="group border-b border-slate-100 pb-12 last:border-0">
-              <span className="text-sm text-slate-400 font-mono block mb-2">{item.date}</span>
-              <Link href={`/newsletters/${item.slug || item.id}`}>
-                <h2 className="font-serif text-2xl text-primary font-medium mb-3 group-hover:text-accent transition-colors">
-                  {item.title}
-                </h2>
-              </Link>
-              <p className="text-slate-600 leading-relaxed mb-4 max-w-3xl">
-                {item.description}
-              </p>
-              <Link href={`/newsletters/${item.slug || item.id}`} className="inline-flex items-center text-sm font-bold text-slate-400 hover:text-accent uppercase tracking-wider transition-colors">
-                Read Issue <ArrowRight size={14} className="ml-1 transition-transform group-hover:translate-x-1" />
-              </Link>
-            </article>
-          )) : (
-            <p className="text-slate-500 italic">No newsletters archived yet.</p>
-          )}
-        </div>
+      {/* Removed Section wrapper for immediate visibility */}
+      <div className="grid gap-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        {currentItems.length > 0 ? currentItems.map((item) => (
+          <article key={item.id} className="group border-b border-slate-100 pb-12 last:border-0">
+            <span className="text-sm text-slate-400 font-mono block mb-2">{item.date}</span>
+            <Link href={`/newsletters/${item.slug || item.id}`}>
+              <h2 className="font-serif text-2xl text-primary font-medium mb-3 group-hover:text-accent transition-colors">
+                {item.title}
+              </h2>
+            </Link>
+            <p className="text-slate-600 leading-relaxed mb-4 max-w-3xl">
+              {item.description}
+            </p>
+            <Link href={`/newsletters/${item.slug || item.id}`} className="inline-flex items-center text-sm font-bold text-slate-400 hover:text-accent uppercase tracking-wider transition-colors">
+              Read Issue <ArrowRight size={14} className="ml-1 transition-transform group-hover:translate-x-1" />
+            </Link>
+          </article>
+        )) : (
+          <p className="text-slate-500 italic">No newsletters archived yet.</p>
+        )}
+      </div>
 
-        <Pagination 
-          currentPage={currentPage} 
-          totalPages={totalPages} 
-          onPageChange={handlePageChange} 
-        />
-      </Section>
+      <Pagination 
+        currentPage={currentPage} 
+        totalPages={totalPages} 
+        onPageChange={handlePageChange} 
+      />
     </div>
   );
 };

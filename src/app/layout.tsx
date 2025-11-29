@@ -61,7 +61,14 @@ export const metadata: Metadata = {
   },
 
   icons: {
-    icon: "/favicon.ico",
+    // Use profile image as favicon for personal branding
+    icon: [
+      { url: '/images/Chisom.jpg', type: 'image/jpeg' },
+    ],
+    shortcut: ['/images/Chisom.jpg'],
+    apple: [
+      { url: '/images/Chisom.jpg' },
+    ],
   }
 };
 
