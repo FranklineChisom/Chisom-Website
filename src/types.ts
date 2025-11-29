@@ -89,6 +89,7 @@ export interface Draft {
   message: string;
   updated_at: string;
   deleted_at?: string | null;
+  attachments?: string[]; // Added attachments to Draft
 }
 
 export interface SentEmail {
