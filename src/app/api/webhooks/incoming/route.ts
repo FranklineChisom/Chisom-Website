@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 // Initialize Supabase Admin Client
-// We use ANON KEY here assuming RLS allows insert. Ideally use SERVICE_ROLE key for backend scripts.
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!; 
 const supabase = createClient(supabaseUrl, supabaseKey);
@@ -11,26 +10,45 @@ export async function POST(request: Request) {
   try {
     const payload = await request.json();
 
-    // Resend sends a specific payload structure for inbound emails.
-    // Important: Verify the Resend signature if possible in production for security.
-    
-    const { from, subject, text, html, date } = payload;
+    // 1. Extract standard fields
+    const { from, subject, text, html, date, attachments } = payload;
 
-    // Extract name and email from the "From" field (e.g., "John Doe <john@example.com>")
+    // 2. Parse "From"
     const fromString = from || '';
     const emailMatch = fromString.match(/<(.+)>/);
     const email = emailMatch ? emailMatch[1] : fromString;
     const name = fromString.replace(/<.+>/, '').trim() || email;
 
+    // 3. Process Attachments
+    // Resend Incoming Webhook attachments usually come as an array of objects:
+    // [{ filename: '...', content: [Buffer array], type: '...' }]
+    // Saving binary content directly to JSONB is bad practice and hits size limits.
+    // For this implementation, we will save a text reference noting an attachment exists.
+    // *To fully support incoming files, you would need to upload 'content' to Supabase Storage buckets here.*
+    
+    const processedAttachments: string[] = [];
+    
+    if (Array.isArray(attachments)) {
+        attachments.forEach(att => {
+            if (att.filename) {
+                // Since we can't easily upload to storage in this short webhook without
+                // more setup, we'll just log the filename so the user knows a file was sent.
+                processedAttachments.push(`[File: ${att.filename}]`);
+            }
+        });
+    }
+
+    // 4. Save to DB
     const { error } = await supabase.from('messages').insert({
       id: `msg_${Date.now()}_${Math.random().toString(36).substring(7)}`,
       name: name,
       email: email,
       subject: subject || '(No Subject)',
-      message: text || 'No plain text content.', // Prefer text
+      message: text || 'No plain text content.', 
       date: new Date(date || Date.now()).toISOString(),
       read: false,
       replied: false,
+      attachments: processedAttachments,
       created_at: new Date().toISOString()
     });
 

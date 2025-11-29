@@ -60,6 +60,7 @@ export interface SocialConfig {
   instagram?: string;
 }
 
+// Updated with attachments
 export interface ContactMessage {
   id: string;
   date: string;
@@ -70,6 +71,7 @@ export interface ContactMessage {
   read: boolean;
   replied?: boolean;
   deleted_at?: string | null;
+  attachments?: string[]; 
 }
 
 export interface Subscriber {
@@ -87,8 +89,11 @@ export interface Draft {
   message: string;
   updated_at: string;
   deleted_at?: string | null;
+  // Note: We don't strictly save attachments for drafts in this simple version, 
+  // but you can add it if needed.
 }
 
+// Updated with attachments
 export interface SentEmail {
   id: string;
   recipient: string;
@@ -98,9 +103,9 @@ export interface SentEmail {
   status: 'sent' | 'failed';
   created_at: string;
   deleted_at?: string | null;
+  attachments?: string[];
 }
 
-// Keep ResendEmail for API compatibility if needed, but SentEmail is preferred for UI
 export interface ResendEmail {
   id: string;
   from: string;

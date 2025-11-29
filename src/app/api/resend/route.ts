@@ -20,8 +20,8 @@ export async function POST(request: Request) {
     const fromEmail = 'contact@franklinechisom.com'; 
     const adminEmail = process.env.ADMIN_EMAIL || 'contact@franklinechisom.com';
 
-    // Prepare attachments for Resend if they exist
-    // Resend expects: { filename: string, path: string } for URLs
+    // Prepare attachments for Resend
+    // We expect 'attachments' to be an array of URLs (strings) passed from the frontend
     const resendAttachments = attachments?.map((url: string) => ({
       filename: url.split('/').pop() || 'attachment',
       path: url
@@ -42,7 +42,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: data.error }, { status: 500 });
     }
 
-    // 2. Save to Supabase 'sent_emails' table
+    // 2. Save to Supabase 'sent_emails' table INCLUDING attachments
     await supabase.from('sent_emails').insert({
       id: data.data?.id || `sent_${Date.now()}`,
       recipient: to,
@@ -50,6 +50,7 @@ export async function POST(request: Request) {
       html: html,
       text: text,
       status: 'sent',
+      attachments: attachments || [], // Save the array of URLs
       created_at: new Date().toISOString()
     });
 
