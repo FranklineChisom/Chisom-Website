@@ -188,6 +188,7 @@ const Navbar: React.FC = () => {
                 newsletters={newsletters}
                 placeholder="Search articles, publications, and newsletters..."
                 onRequestClose={() => setIsSearchOpen(false)}
+                autoFocus={true} 
               />
             </div>
           </div>

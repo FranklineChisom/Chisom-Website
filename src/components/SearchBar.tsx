@@ -18,6 +18,7 @@ interface SearchBarProps {
   placeholder?: string;
   scope?: "all" | "blog" | "publication" | "newsletter";
   onRequestClose?: () => void;
+  autoFocus?: boolean; // Added autoFocus prop
 }
 
 const SearchBar: React.FC<SearchBarProps> = ({
@@ -26,7 +27,8 @@ const SearchBar: React.FC<SearchBarProps> = ({
   newsletters = [],
   placeholder = "Search...",
   scope = "all",
-  onRequestClose
+  onRequestClose,
+  autoFocus = false // Default to false so it doesn't jump on page load
 }) => {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -155,7 +157,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
           onFocus={() => setIsOpen(true)}
           placeholder={placeholder}
           className="w-full pl-12 pr-12 py-3 border border-slate-200 rounded-none focus:outline-none focus:border-primary transition-colors text-slate-800 bg-white"
-          autoFocus 
+          autoFocus={autoFocus} 
         />
         {query && (
           <button
