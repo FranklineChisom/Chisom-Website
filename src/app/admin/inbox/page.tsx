@@ -12,6 +12,7 @@ import { useData } from '@/contexts/DataContext';
 import { useToast } from '@/contexts/ToastContext';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import MediaLibrary from '@/components/MediaLibrary';
+import { formatDistanceToNow, format, isValid, parseISO } from 'date-fns';
 
 // --- Types ---
 type Folder = 'inbox' | 'sent' | 'drafts' | 'trash';
@@ -35,6 +36,26 @@ interface ComposeState {
     body: string;
     attachments: string[];
 }
+
+// --- Helper for Date Formatting ---
+const formatMessageDate = (dateString?: string) => {
+    if (!dateString) return '';
+    
+    // Handle both ISO strings and potentially older locales
+    let date = new Date(dateString);
+    if (!isValid(date)) return 'Invalid Date';
+
+    const now = new Date();
+    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
+
+    // If less than 24 hours, show relative time (e.g., "5 mins ago")
+    if (diffInHours < 24) {
+        return formatDistanceToNow(date, { addSuffix: true });
+    }
+    
+    // Otherwise show date (e.g., "Oct 24, 2025")
+    return format(date, 'MMM d, yyyy');
+};
 
 // --- Main Component ---
 export default function InboxManager() {
@@ -88,7 +109,6 @@ export default function InboxManager() {
     // If selecting a draft in Drafts folder, open compose
     if (activeFolder === 'drafts' && item.type === 'draft') {
         const draft = item.raw as Draft;
-        // Parsing attachments would go here if we saved them in draft
         handleCompose({ id: draft.id, to: draft.recipient, subject: draft.subject, body: draft.message });
     }
   };
@@ -201,21 +221,24 @@ export default function InboxManager() {
   const getListItems = (): ListItem[] => {
       const lowerQ = searchQuery.toLowerCase();
       
-      // FIX: Safely handle null/undefined strings
+      // FIX: Robust search that handles null/undefined fields
       const filterText = (t: string | null | undefined) => (t || '').toLowerCase().includes(lowerQ);
 
       // Helper to map data to list items
       const mapMessage = (m: ContactMessage): ListItem => ({
-          id: m.id, title: m.name, subtitle: m.subject, date: new Date(m.date).toLocaleDateString(),
+          id: m.id, title: m.name || 'Unknown', subtitle: m.subject || '(No Subject)', 
+          date: formatMessageDate(m.date || m['created_at']), // Prioritize date field, fallback to created_at
           read: m.read, replied: !!m.replied, raw: m, type: 'message'
       });
       const mapSent = (e: SentEmail): ListItem => ({
-          id: e.id, title: `To: ${e.recipient}`, subtitle: e.subject, date: new Date(e.created_at).toLocaleDateString(),
+          id: e.id, title: `To: ${e.recipient}`, subtitle: e.subject || '(No Subject)', 
+          date: formatMessageDate(e.created_at),
           read: true, replied: false, status: e.status, raw: e, type: 'sent'
       });
       const mapDraft = (d: Draft): ListItem => ({
           id: d.id, title: d.recipient || '(No Recipient)', subtitle: d.subject || '(No Subject)',
-          date: new Date(d.updated_at).toLocaleDateString(), read: true, replied: false, raw: d, type: 'draft'
+          date: formatMessageDate(d.updated_at), 
+          read: true, replied: false, raw: d, type: 'draft'
       });
 
       let items: ListItem[] = [];
@@ -239,7 +262,12 @@ export default function InboxManager() {
               break;
       }
       
-      return items.sort((a, b) => new Date(b.raw['created_at'] || b.raw['date'] || b.raw['updated_at']).getTime() - new Date(a.raw['created_at'] || a.raw['date'] || a.raw['updated_at']).getTime());
+      // Sort by the raw date object to ensure correctness even if formatted string differs
+      return items.sort((a, b) => {
+          const dateA = new Date(a.raw['created_at'] || a.raw['date'] || a.raw['updated_at'] || 0).getTime();
+          const dateB = new Date(b.raw['created_at'] || b.raw['date'] || b.raw['updated_at'] || 0).getTime();
+          return dateB - dateA;
+      });
   };
 
   const listItems = getListItems();

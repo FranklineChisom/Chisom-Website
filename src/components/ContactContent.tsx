@@ -18,7 +18,8 @@ const ContactContent: React.FC = () => {
 
     addMessage({
         id: Date.now().toString(),
-        date: new Date().toLocaleDateString(),
+        // FIX: Use ISO string for consistent date parsing across all browsers/systems
+        date: new Date().toISOString(),
         ...formData,
         read: false
     });

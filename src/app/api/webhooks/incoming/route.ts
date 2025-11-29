@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 // Initialize Supabase Admin Client
+// We use ANON KEY here assuming RLS allows insert. Ideally use SERVICE_ROLE key for backend scripts.
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!; 
 const supabase = createClient(supabaseUrl, supabaseKey);
@@ -10,12 +11,12 @@ export async function POST(request: Request) {
   try {
     const payload = await request.json();
 
-    // Resend sends a specific payload structure for inbound emails
-    // We map it to your existing 'messages' table schema
+    // Resend sends a specific payload structure for inbound emails.
+    // Important: Verify the Resend signature if possible in production for security.
+    
     const { from, subject, text, html, date } = payload;
 
     // Extract name and email from the "From" field (e.g., "John Doe <john@example.com>")
-    // Simple regex to parse "Name <email>" or just "email"
     const fromString = from || '';
     const emailMatch = fromString.match(/<(.+)>/);
     const email = emailMatch ? emailMatch[1] : fromString;
@@ -26,7 +27,7 @@ export async function POST(request: Request) {
       name: name,
       email: email,
       subject: subject || '(No Subject)',
-      message: text || 'No plain text content.', // Prefer text, could store HTML if you add a column
+      message: text || 'No plain text content.', // Prefer text
       date: new Date(date || Date.now()).toISOString(),
       read: false,
       replied: false,
