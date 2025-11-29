@@ -31,14 +31,19 @@ async function getData() {
     analyticsUrl: dbConfig.analytics_url
   } : SITE_CONFIG;
 
+  // Fetch all published posts to sort them correctly in JS
   const { data: dbPosts } = await supabase
     .from('blog_posts')
     .select('*')
-    .eq('published', true)
-    .order('date', { ascending: false })
-    .limit(3);
+    .eq('published', true);
     
-  const recentPosts: BlogPost[] = dbPosts ? dbPosts.map((p: any) => ({
+  // Sort posts by date descending (handles mixed date formats)
+  const sortedPosts = (dbPosts || []).sort((a, b) => {
+    return new Date(b.date).getTime() - new Date(a.date).getTime();
+  });
+
+  // Take the top 3 after sorting
+  const recentPosts: BlogPost[] = sortedPosts.slice(0, 3).map((p: any) => ({
     id: p.id,
     slug: p.slug,
     title: p.title,
@@ -49,16 +54,21 @@ async function getData() {
     readTime: p.read_time,
     coverImage: p.cover_image,
     published: p.published
-  })) : [];
+  }));
 
+  // Fetch all published newsletters to sort correctly in JS
   const { data: dbNewsletters } = await supabase
     .from('newsletters')
     .select('*')
-    .eq('published', true)
-    .order('date', { ascending: false })
-    .limit(2);
+    .eq('published', true);
 
-  const recentNewsletters: Newsletter[] = dbNewsletters ? dbNewsletters.map((n: any) => ({
+  // Sort newsletters by date descending
+  const sortedNewsletters = (dbNewsletters || []).sort((a, b) => {
+    return new Date(b.date).getTime() - new Date(a.date).getTime();
+  });
+
+  // Take top 2 after sorting
+  const recentNewsletters: Newsletter[] = sortedNewsletters.slice(0, 2).map((n: any) => ({
     id: n.id,
     slug: n.slug,
     title: n.title,
@@ -67,7 +77,7 @@ async function getData() {
     content: n.content,
     coverImage: n.cover_image,
     published: n.published
-  })) : [];
+  }));
 
   return { siteConfig, recentPosts, recentNewsletters };
 }

@@ -2,16 +2,24 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  // Check if the user is accessing an admin route
-  if (request.nextUrl.pathname.startsWith('/admin')) {
-    // Look for the admin session cookie
-    const adminSession = request.cookies.get('admin_session');
+  const adminSession = request.cookies.get('admin_session');
+  const path = request.nextUrl.pathname;
 
-    // If no session exists, redirect to the login page
+  // 1. Admin Route Protection
+  // If accessing /admin and NO session, redirect to login
+  if (path.startsWith('/admin')) {
     if (!adminSession) {
       const loginUrl = new URL('/login', request.url);
-      // Optional: specific redirect back logic could go here
       return NextResponse.redirect(loginUrl);
+    }
+  }
+
+  // 2. Login Page Redirect
+  // If accessing /login and session EXISTS, redirect immediately to admin dashboard
+  if (path === '/login') {
+    if (adminSession) {
+      const adminUrl = new URL('/admin', request.url);
+      return NextResponse.redirect(adminUrl);
     }
   }
 
@@ -19,5 +27,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: '/admin/:path*',
+  matcher: ['/admin/:path*', '/login'],
 };

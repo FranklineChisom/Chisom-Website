@@ -22,14 +22,18 @@ async function getNewsletters() {
   const { data } = await supabase
     .from('newsletters')
     .select('*')
-    .eq('published', true)
-    .order('date', { ascending: false });
+    .eq('published', true);
 
   if (!data || data.length === 0) {
     return []; 
   }
 
-  return data.map((n: any) => ({
+  // Sort by date descending in JavaScript
+  const sortedData = data.sort((a, b) => {
+    return new Date(b.date).getTime() - new Date(a.date).getTime();
+  });
+
+  return sortedData.map((n: any) => ({
     id: n.id,
     slug: n.slug,
     title: n.title,

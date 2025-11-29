@@ -22,10 +22,17 @@ async function getPublications() {
     .eq('published', true);
 
   if (!data || data.length === 0) {
-    return []; // No fallback, return empty array
+    return []; 
   }
 
-  return data.map((pub: any) => ({
+  // Sort by Year descending, then by Title
+  const sortedData = data.sort((a, b) => {
+    const yearDiff = (parseInt(b.year) || 0) - (parseInt(a.year) || 0);
+    if (yearDiff !== 0) return yearDiff;
+    return a.title.localeCompare(b.title);
+  });
+
+  return sortedData.map((pub: any) => ({
     id: pub.id,
     title: pub.title,
     year: pub.year,

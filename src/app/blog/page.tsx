@@ -18,14 +18,18 @@ async function getBlogPosts() {
   const { data } = await supabase
     .from('blog_posts')
     .select('*')
-    .eq('published', true)
-    .order('date', { ascending: false });
+    .eq('published', true);
 
   if (!data || data.length === 0) {
-    return []; // No fallback, return empty array
+    return []; 
   }
 
-  return data.map((p: any) => ({
+  // Robust client-side sorting to handle various date formats string/ISO
+  const sortedData = data.sort((a, b) => {
+    return new Date(b.date).getTime() - new Date(a.date).getTime();
+  });
+
+  return sortedData.map((p: any) => ({
     id: p.id,
     slug: p.slug,
     title: p.title,

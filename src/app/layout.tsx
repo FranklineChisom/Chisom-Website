@@ -55,14 +55,16 @@ export const metadata: Metadata = {
     },
   },
 
-  // Standard favicon configuration
+  // Fixed Favicon Configuration
   icons: {
+    // Favicon.ico is for legacy support
     icon: [
-      { url: '/favicon.ico', sizes: 'any' },
       { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico', sizes: 'any' }
     ],
+    // Apple touch icon
     apple: [
-      { url: '/apple-touch-icon.png' }, // Assuming you might add this later, or reuse a png
+      { url: '/apple-touch-icon.png' },
     ],
   },
 
@@ -82,6 +84,9 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+        {/* Explicit fallback for favicon if metadata misses some browsers */}
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link rel="alternate icon" href="/favicon.ico" />
       </head>
       <body className="font-sans bg-white text-slate-800 antialiased">
         <Providers>
