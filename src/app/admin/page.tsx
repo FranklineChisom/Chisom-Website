@@ -8,7 +8,7 @@ import {
 import { useData } from '@/contexts/DataContext';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { supabase } from '@/lib/supabase';
-import { Activity, FileText, Globe, ExternalLink, Save, Loader2 } from 'lucide-react';
+import { Activity, FileText, Globe, ExternalLink, Save, Loader2, Mail } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
 
 const COLORS = ['#0f2f38', '#d4af37', '#64748b', '#94a3b8', '#cbd5e1'];
@@ -213,6 +213,17 @@ export default function AdminDashboard() {
       </div>
       
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+        {/* Messages Card - Modified to show Unread as primary metric */}
+        <div className="bg-white p-6 rounded-none shadow-sm border border-slate-100 relative group overflow-hidden">
+          <div className="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+          </div>
+          <div className="text-slate-500 text-sm font-medium uppercase tracking-wider mb-2">Unread Messages</div>
+          <div className="text-4xl font-bold text-primary">{counts.messages.unread}</div>
+          <div className="text-xs text-slate-500 mt-2 flex gap-2 items-center">
+             <span className="bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">{counts.messages.total} Total Messages</span>
+          </div>
+        </div>
+
         {/* Stats Cards */}
         <div className="bg-white p-6 rounded-none shadow-sm border border-slate-100">
           <div className="text-slate-500 text-sm font-medium uppercase tracking-wider mb-2">Articles</div>
@@ -241,13 +252,6 @@ export default function AdminDashboard() {
         <div className="bg-white p-6 rounded-none shadow-sm border border-slate-100">
           <div className="text-slate-500 text-sm font-medium uppercase tracking-wider mb-2">Subscribers</div>
           <div className="text-4xl font-bold text-primary">{counts.subscribers}</div>
-        </div>
-        <div className="bg-white p-6 rounded-none shadow-sm border border-slate-100">
-          <div className="text-slate-500 text-sm font-medium uppercase tracking-wider mb-2">Inbox</div>
-             <div className="text-4xl font-bold text-primary">{counts.messages.total}</div>
-             <div className="text-xs text-slate-500 mt-2 flex gap-2">
-              {counts.messages.unread > 0 && <span className="text-yellow-600 bg-yellow-50 px-1.5 py-0.5 rounded">{counts.messages.unread} Unread</span>}
-            </div>
         </div>
       </div>
 
