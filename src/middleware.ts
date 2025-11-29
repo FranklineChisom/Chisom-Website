@@ -2,11 +2,12 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
+  // Check for the admin session cookie created during login
   const adminSession = request.cookies.get('admin_session');
   const path = request.nextUrl.pathname;
 
-  // 1. Admin Route Protection
-  // If accessing /admin and NO session, redirect to login
+  // 1. Protected Admin Routes
+  // If user tries to access /admin area without a session, send them to login
   if (path.startsWith('/admin')) {
     if (!adminSession) {
       const loginUrl = new URL('/login', request.url);
@@ -14,8 +15,8 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // 2. Login Page Redirect
-  // If accessing /login and session EXISTS, redirect immediately to admin dashboard
+  // 2. Public Login Page (Redirect Feature)
+  // If user tries to access /login but HAS a session, redirect to dashboard
   if (path === '/login') {
     if (adminSession) {
       const adminUrl = new URL('/admin', request.url);
@@ -27,5 +28,6 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
+  // Matcher ignores internal Next.js paths, static files, and API routes
   matcher: ['/admin/:path*', '/login'],
 };

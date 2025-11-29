@@ -55,17 +55,17 @@ export const metadata: Metadata = {
     },
   },
 
-  // Fixed Favicon Configuration
+  // Corrected Favicon Configuration
+  // Next.js will automatically generate the appropriate <link> tags in the head
   icons: {
-    // Favicon.ico is for legacy support
     icon: [
       { url: '/favicon.svg', type: 'image/svg+xml' },
-      { url: '/favicon.ico', sizes: 'any' }
+      { url: '/favicon.svg', sizes: 'any' } // Fallback for older browsers
     ],
-    // Apple touch icon
     apple: [
-      { url: '/apple-touch-icon.png' },
+      { url: '/favicon.svg' }, // Using your existing png as the apple touch icon
     ],
+    shortcut: ['/favicon.svg']
   },
 
   verification: {
@@ -84,9 +84,6 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet" />
-        {/* Explicit fallback for favicon if metadata misses some browsers */}
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-        <link rel="alternate icon" href="/favicon.ico" />
       </head>
       <body className="font-sans bg-white text-slate-800 antialiased">
         <Providers>
