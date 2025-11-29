@@ -3,9 +3,9 @@
 import React, { useState } from 'react';
 import Section from '@/components/Section';
 import { useData } from '@/contexts/DataContext';
-import { FontAwesomeIcon } from '@fontawesome/react-fontawesome';
-import { faEnvelope, faLocationDot, faCheck, faGraduationCap, faBookmark } from '@fontawesome/free-solid-svg-icons';
-import { faLinkedin } from '@fontawesome/free-brands-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEnvelope, faLocationDot, faCheck, faGraduationCap, faBookmark } from '@fortawesome/free-solid-svg-icons';
+import { faLinkedin } from '@fortawesome/free-brands-svg-icons';
 
 const ContactContent: React.FC = () => {
   const { siteConfig, addMessage } = useData();
