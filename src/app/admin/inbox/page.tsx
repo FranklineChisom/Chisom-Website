@@ -52,6 +52,13 @@ const formatMessageDate = (dateString?: string) => {
     return format(date, 'MMM d, yyyy');
 };
 
+// --- Helper to safely get date for sorting ---
+// Uses 'any' to bypass TS union checks for dynamic properties
+const getRawDate = (item: any): number => {
+    const d = item.created_at || item.date || item.updated_at;
+    return new Date(d || 0).getTime();
+};
+
 // --- Main Component ---
 export default function InboxManager() {
   usePageTitle('Mail - Admin');
@@ -194,7 +201,7 @@ export default function InboxManager() {
 
       const mapMessage = (m: ContactMessage): ListItem => ({
           id: m.id, title: m.name || 'Unknown', subtitle: m.subject || '(No Subject)', 
-          date: formatMessageDate(m.date || m['created_at']), 
+          date: formatMessageDate(m.date || m.created_at), // Using explicit property access now
           read: m.read, replied: !!m.replied, raw: m, type: 'message'
       });
       const mapSent = (e: SentEmail): ListItem => ({
@@ -224,11 +231,8 @@ export default function InboxManager() {
               break;
       }
       
-      return items.sort((a, b) => {
-          const dateA = new Date(a.raw['created_at'] || a.raw['date'] || a.raw['updated_at'] || 0).getTime();
-          const dateB = new Date(b.raw['created_at'] || b.raw['date'] || b.raw['updated_at'] || 0).getTime();
-          return dateB - dateA;
-      });
+      // Use the safe getRawDate helper for sorting
+      return items.sort((a, b) => getRawDate(b.raw) - getRawDate(a.raw));
   };
 
   const listItems = getListItems();

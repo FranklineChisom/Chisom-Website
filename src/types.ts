@@ -60,7 +60,6 @@ export interface SocialConfig {
   instagram?: string;
 }
 
-// Updated with attachments
 export interface ContactMessage {
   id: string;
   date: string;
@@ -71,7 +70,8 @@ export interface ContactMessage {
   read: boolean;
   replied?: boolean;
   deleted_at?: string | null;
-  attachments?: string[]; 
+  attachments?: string[];
+  created_at?: string; // Added this to fix the build error
 }
 
 export interface Subscriber {
@@ -89,11 +89,8 @@ export interface Draft {
   message: string;
   updated_at: string;
   deleted_at?: string | null;
-  // Note: We don't strictly save attachments for drafts in this simple version, 
-  // but you can add it if needed.
 }
 
-// Updated with attachments
 export interface SentEmail {
   id: string;
   recipient: string;
