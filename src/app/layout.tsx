@@ -1,4 +1,5 @@
-import type { Metadata, Viewport } from "next"; // Add Viewport
+import type { Metadata, Viewport } from "next"; 
+import { GoogleAnalytics } from '@next/third-parties/google'; // Import GA Component
 import "./globals.css";
 import { Providers } from "./providers";
 import ClientLayout from "@/components/ClientLayout";
@@ -22,7 +23,7 @@ export const metadata: Metadata = {
   authors: [{ name: "Frankline Chisom Ebere" }],
   creator: "Frankline Chisom Ebere",
   
-  // OpenGraph (Facebook, LinkedIn, etc.)
+  // OpenGraph
   openGraph: {
     siteName: 'Frankline Chisom Ebere',
     locale: 'en_US',
@@ -30,7 +31,7 @@ export const metadata: Metadata = {
     url: 'https://franklinechisom.com',
     images: [
       {
-        url: '/images/og-default.jpg', // Ensure this file exists in /public/images/
+        url: '/images/og-default.jpg',
         width: 1200,
         height: 630,
         alt: 'Frankline Chisom Ebere - Legal Researcher',
@@ -42,7 +43,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Frankline Chisom Ebere',
-    creator: '@Frankline_Rolis', // Your handle from constants
+    creator: '@Frankline_Rolis',
     images: ['/images/og-default.jpg'],
   },
 
@@ -67,6 +68,10 @@ export const metadata: Metadata = {
     apple: [
       { url: '/favicon.svg' },
     ],
+  },
+  // Verification for Google Search Console (Optional but recommended)
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
   }
 };
 
@@ -89,6 +94,10 @@ export default function RootLayout({
           </ClientLayout>
         </Providers>
       </body>
+      {/* Analytics script injected here - only if ID exists */}
+      {process.env.NEXT_PUBLIC_GA_ID && (
+        <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
+      )}
     </html>
   );
 }
