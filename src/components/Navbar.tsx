@@ -92,7 +92,7 @@ const Navbar: React.FC = () => {
         }`}
       >
         <div className="max-w-6xl mx-auto px-6 flex justify-between items-center">
-          <Link href="/" className="font-serif text-2xl font-bold text-primary">
+          <Link href="/" className="font-serif text-2xl font-bold italic text-primary">
             Chisom
           </Link>
 
