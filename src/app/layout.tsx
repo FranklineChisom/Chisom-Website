@@ -1,16 +1,16 @@
-import type { Metadata, Viewport } from "next";
+import type { Metadata, Viewport } from "next"; // Add Viewport
 import "./globals.css";
 import { Providers } from "./providers";
 import ClientLayout from "@/components/ClientLayout";
 
-// 1. Viewport configuration (Next.js 14+)
+// 1. Separate Viewport export (Next.js 14+)
 export const viewport: Viewport = {
   themeColor: '#0f2f38',
   width: 'device-width',
   initialScale: 1,
 };
 
-// 2. Global Metadata Defaults
+// 2. Comprehensive Global Metadata
 export const metadata: Metadata = {
   metadataBase: new URL('https://franklinechisom.com'),
   title: {
@@ -18,10 +18,9 @@ export const metadata: Metadata = {
     default: 'Frankline Chisom Ebere',
   },
   description: "Junior Research Fellow at Lex Lata Centre specializing in International Financial Law, African capital markets, and AfCFTA regulatory harmonization.",
-  keywords: ["International Financial Law", "AfCFTA", "African Capital Markets", "Legal Research", "Nigeria Law", "Trade Law", "Dispute Resolution"],
+  keywords: ["International Financial Law", "AfCFTA", "African Capital Markets", "Legal Research", "Nigeria Law"],
   authors: [{ name: "Frankline Chisom Ebere" }],
   creator: "Frankline Chisom Ebere",
-  publisher: "Frankline Chisom Ebere",
   
   // OpenGraph (Facebook, LinkedIn, etc.)
   openGraph: {
@@ -31,10 +30,10 @@ export const metadata: Metadata = {
     url: 'https://franklinechisom.com',
     images: [
       {
-        url: '/images/Chisom.jpg', // Default OG Image
+        url: '/images/og-default.jpg', // Ensure this file exists in /public/images/
         width: 1200,
         height: 630,
-        alt: 'Frankline Chisom Ebere',
+        alt: 'Frankline Chisom Ebere - Legal Researcher',
       },
     ],
   },
@@ -43,11 +42,11 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Frankline Chisom Ebere',
-    creator: '@Frankline_Rolis',
-    images: ['/images/Chisom.jpg'],
+    creator: '@Frankline_Rolis', // Your handle from constants
+    images: ['/images/og-default.jpg'],
   },
 
-  // Robot directives
+  // Robots
   robots: {
     index: true,
     follow: true,
