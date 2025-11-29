@@ -433,7 +433,7 @@ export default function InboxManager() {
         <div className="flex-1 overflow-y-auto">
             {listItems.length === 0 ? <div className="p-12 text-center text-slate-400 text-sm flex flex-col items-center"><Inbox size={32} className="mb-2 opacity-20" /><span>No messages</span></div> : listItems.map(item => (
                 <div key={item.id} onClick={() => handleSelectItem(item)} className={`group relative p-4 border-b border-slate-100 cursor-pointer transition-all hover:bg-slate-50 ${selectedId === item.id ? 'bg-blue-50/50 border-l-4 border-l-primary' : 'border-l-4 border-l-transparent'} ${!item.read ? 'bg-slate-50' : ''}`}>
-                    <div className="absolute left-2 top-4 opacity-0 group-hover:opacity-100 transition-opacity z-10 block md:hidden md:block" onClick={(e) => e.stopPropagation()}>
+                    <div className="absolute left-2 top-4 opacity-70 group-hover:opacity-100 transition-opacity z-10 block md:hidden md:block" onClick={(e) => e.stopPropagation()}>
                         <button onClick={(e) => toggleCheck(item.id, e)} className="text-slate-400 hover:text-primary p-2 md:p-0">
                             {checkedIds.has(item.id) ? <CheckSquare size={16} className="text-primary" /> : <Square size={16} />}
                         </button>
