@@ -291,7 +291,7 @@ export default function InboxManager() {
                 {drafts.filter(d => !d.deleted_at).length > 0 && <span className="text-slate-400 font-normal text-xs">{drafts.filter(d => !d.deleted_at).length}</span>}
             </button>
             <div className="pt-4 mt-2 border-t border-slate-200/60">
-                <button onClick={() => { setActiveFolder('trash'); setSelectedId(null); setIsComposing(false); }} className={`w-full flex items-center justify-between px-4 py-2.5 rounded-md text-sm font-medium transition-colors ${activeFolder === 'trash' ? 'bg-white text-red-600 shadow-sm ring-1 ring-red-100' : 'text-slate-600 hover:bg-red-50 hover:text-red-600'}`}>
+                <button onClick={() => { setActiveFolder('trash'); setSelectedId(null); setIsComposing(false); }} className={`w-full flex items-center justify-between px-4 py-2.5 rounded-md text-sm font-medium transition-colors ${activeFolder === 'trash' ? 'bg-white text-red-600 shadow-sm ring-1 ring-red-100' : 'hover:bg-red-50 text-red-600'}`}>
                     <div className="flex items-center gap-3"><Trash2 size={18} /> Trash</div>
                 </button>
             </div>
