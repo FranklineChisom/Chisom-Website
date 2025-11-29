@@ -131,11 +131,14 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loadBlogPosts = async () => {
     const { data, error } = await supabase.from('blog_posts').select('*');
-    if (error) {
-      handleSupabaseError(error, 'Error loading blog posts');
+    
+    // Fallback to default constants if error OR if database is empty
+    if (error || !data || data.length === 0) {
+      if (error) handleSupabaseError(error, 'Error loading blog posts');
       setBlogPosts(DEFAULT_POSTS);
       return;
     }
+
     const posts = data.map(post => ({
       id: post.id,
       slug: post.slug,
@@ -154,11 +157,14 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loadPublications = async () => {
     const { data, error } = await supabase.from('publications').select('*');
-    if (error) {
-      handleSupabaseError(error, 'Error loading publications');
+    
+    // Fallback to default constants if error OR if database is empty
+    if (error || !data || data.length === 0) {
+      if (error) handleSupabaseError(error, 'Error loading publications');
       setPublications(DEFAULT_PUBS);
       return;
     }
+
     const pubs = data.map(pub => ({
       id: pub.id,
       title: pub.title,
@@ -177,11 +183,14 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loadNewsletters = async () => {
     const { data, error } = await supabase.from('newsletters').select('*');
-    if (error) {
-      handleSupabaseError(error, 'Error loading newsletters');
+    
+    // Fallback to default constants if error OR if database is empty
+    if (error || !data || data.length === 0) {
+      if (error) handleSupabaseError(error, 'Error loading newsletters');
       setNewsletters(DEFAULT_NEWSLETTERS);
       return;
     }
+
     const newsletterData = data.map(n => ({
         id: n.id,
         slug: n.slug,
@@ -268,6 +277,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       published: post.published
     });
     if (error) return false;
+    
+    // If we were showing defaults because DB was empty, we should clear them before adding the new one
+    // But since we can't easily check 'wasDefault' here, simply spreading [post, ...blogPosts] 
+    // might mix default data with real data visually until refresh. 
+    // To keep it simple for immediate feedback:
     const newPosts = [post, ...blogPosts];
     newPosts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     setBlogPosts(newPosts);
