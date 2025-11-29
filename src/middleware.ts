@@ -20,7 +20,8 @@ export function middleware(request: NextRequest) {
   if (path === '/login') {
     if (adminSession) {
       const adminUrl = new URL('/admin', request.url);
-      return NextResponse.redirect(adminUrl);
+      // Use 302 to ensure browser clears cache/history state correctly for the redirect
+      return NextResponse.redirect(adminUrl, { status: 302 });
     }
   }
 
