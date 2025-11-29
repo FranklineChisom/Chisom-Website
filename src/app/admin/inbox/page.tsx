@@ -1,26 +1,49 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   Mail, Inbox, Send, FileText, Trash2, Edit3, Search, 
   ChevronLeft, ChevronRight, RefreshCw, MoreHorizontal, 
-  CornerUpLeft, Check, X, Loader2, User, Paperclip
+  CornerUpLeft, Check, X, Loader2, User, Paperclip, 
+  RotateCcw, AlertOctagon, CheckCircle2, MailOpen
 } from 'lucide-react';
-import { ContactMessage, Draft, ResendEmail } from '@/types';
+import { ContactMessage, Draft, SentEmail } from '@/types';
 import { useData } from '@/contexts/DataContext';
 import { useToast } from '@/contexts/ToastContext';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import MediaLibrary from '@/components/MediaLibrary';
 
 // --- Types ---
-type Folder = 'inbox' | 'sent' | 'drafts';
+type Folder = 'inbox' | 'sent' | 'drafts' | 'trash';
+
+interface ListItem {
+    id: string;
+    title: string;
+    subtitle: string;
+    date: string;
+    read: boolean;
+    replied: boolean;
+    status?: 'sent' | 'failed'; // For sent emails
+    raw: ContactMessage | Draft | SentEmail;
+    type: 'message' | 'sent' | 'draft';
+}
+
+interface ComposeState {
+    id?: string;
+    to: string;
+    subject: string;
+    body: string;
+    attachments: string[];
+}
 
 // --- Main Component ---
 export default function InboxManager() {
   usePageTitle('Mail - Admin');
   const { 
     messages, sentEmails, drafts, 
-    markMessageRead, markMessageReplied, deleteMessage, 
-    saveDraft, deleteDraft, refreshSentEmails 
+    markMessageRead, markMessageUnread, markMessageReplied, 
+    saveDraft, deleteDraft, refreshSentEmails,
+    moveToTrash, restoreFromTrash, deletePermanently
   } = useData();
   const { showToast } = useToast();
 
@@ -30,10 +53,11 @@ export default function InboxManager() {
   const [isComposing, setIsComposing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showMediaLibrary, setShowMediaLibrary] = useState(false);
 
   // Compose State
-  const [composeData, setComposeData] = useState<{ id?: string, to: string, subject: string, body: string }>({
-    to: '', subject: '', body: ''
+  const [composeData, setComposeData] = useState<ComposeState>({
+    to: '', subject: '', body: '', attachments: []
   });
   const [isSending, setIsSending] = useState(false);
 
@@ -46,24 +70,26 @@ export default function InboxManager() {
     setTimeout(() => setIsRefreshing(false), 800);
   };
 
-  const handleCompose = (defaults?: Partial<typeof composeData>) => {
-    setComposeData({ to: '', subject: '', body: '', ...defaults });
+  const handleCompose = (defaults?: Partial<ComposeState>) => {
+    setComposeData({ to: '', subject: '', body: '', attachments: [], ...defaults });
     setIsComposing(true);
     setSelectedId(null);
   };
 
-  const handleSelectMessage = (id: string, msg?: ContactMessage) => {
-    setSelectedId(id);
+  const handleSelectItem = (item: ListItem) => {
+    setSelectedId(item.id);
     setIsComposing(false);
-    if (activeFolder === 'inbox' && msg && !msg.read) {
-        markMessageRead(id);
+    
+    // Mark as read if it's an inbox message
+    if (item.type === 'message' && !item.read && activeFolder !== 'trash') {
+        markMessageRead(item.id);
     }
-    // If selecting a draft, open compose mode
-    if (activeFolder === 'drafts') {
-        const draft = drafts.find(d => d.id === id);
-        if (draft) {
-            handleCompose({ id: draft.id, to: draft.recipient, subject: draft.subject, body: draft.message });
-        }
+    
+    // If selecting a draft in Drafts folder, open compose
+    if (activeFolder === 'drafts' && item.type === 'draft') {
+        const draft = item.raw as Draft;
+        // Parsing attachments would go here if we saved them in draft
+        handleCompose({ id: draft.id, to: draft.recipient, subject: draft.subject, body: draft.message });
     }
   };
 
@@ -82,7 +108,8 @@ export default function InboxManager() {
                 to: composeData.to,
                 subject: composeData.subject,
                 html: composeData.body.replace(/\n/g, '<br/>'),
-                text: composeData.body
+                text: composeData.body,
+                attachments: composeData.attachments
             })
         });
         const data = await res.json();
@@ -90,20 +117,19 @@ export default function InboxManager() {
         if (data.success) {
             showToast('Email sent successfully', 'success');
             setIsComposing(false);
-            if (composeData.id) await deleteDraft(composeData.id); // Delete draft after sending
-            await refreshSentEmails(); // Refresh sent folder
+            if (composeData.id) await deletePermanently(composeData.id, 'draft'); // Cleanup draft
+            await refreshSentEmails(); 
         } else {
-            throw new Error(data.error || 'Failed to send');
+            throw new Error(data.error?.message || data.error || 'Failed to send');
         }
     } catch (e: any) {
-        showToast(e.message, 'error');
+        showToast(e.message || 'Failed to send email', 'error');
     } finally {
         setIsSending(false);
     }
   };
 
   const handleSaveDraft = async () => {
-      // Use existing ID or create new one
       const id = composeData.id || `draft_${Date.now()}`;
       const draft: Draft = {
           id,
@@ -113,86 +139,123 @@ export default function InboxManager() {
           updated_at: new Date().toISOString()
       };
       
-      // Update state immediately to reflect ID if it was new
       setComposeData(prev => ({ ...prev, id }));
-
       const success = await saveDraft(draft);
-      if (success) {
-          showToast('Draft saved', 'success');
-      } else {
-          showToast('Failed to save draft', 'error');
-      }
+      if (success) showToast('Draft saved', 'success');
+      else showToast('Failed to save draft', 'error');
   };
 
-  const handleDeleteCurrent = async () => {
-      if (!selectedId) return;
+  const handleDelete = async () => {
+      if (!selectedItem) return;
       
-      if (window.confirm('Are you sure you want to delete this?')) {
-          let success = false;
-          if (activeFolder === 'inbox') success = await deleteMessage(selectedId);
-          if (activeFolder === 'drafts') success = await deleteDraft(selectedId);
-          
+      if (activeFolder === 'trash') {
+          if (window.confirm('Delete permanently? This cannot be undone.')) {
+              const success = await deletePermanently(selectedItem.id, selectedItem.type);
+              if (success) {
+                  showToast('Deleted permanently', 'success');
+                  setSelectedId(null);
+              }
+          }
+      } else {
+          const success = await moveToTrash(selectedItem.id, selectedItem.type);
           if (success) {
-              showToast('Deleted', 'success');
+              showToast('Moved to Trash', 'success');
               setSelectedId(null);
           }
       }
   };
 
-  // --- Filtering ---
+  const handleRestore = async () => {
+      if (!selectedItem || activeFolder !== 'trash') return;
+      const success = await restoreFromTrash(selectedItem.id, selectedItem.type);
+      if (success) {
+          showToast('Restored', 'success');
+          setSelectedId(null);
+      }
+  };
+
+  const handleMarkUnread = async () => {
+      if (!selectedItem || selectedItem.type !== 'message') return;
+      await markMessageUnread(selectedItem.id);
+      showToast('Marked as unread', 'success');
+      setSelectedId(null); // Deselect to show list view change
+  };
+
+  const handleAttach = (url: string) => {
+      setComposeData(prev => ({
+          ...prev,
+          attachments: [...prev.attachments, url]
+      }));
+      setShowMediaLibrary(false);
+  };
+
+  const removeAttachment = (index: number) => {
+      setComposeData(prev => ({
+          ...prev,
+          attachments: prev.attachments.filter((_, i) => i !== index)
+      }));
+  };
+
+  // --- Filtering & Sorting ---
   
-  const getListItems = () => {
+  const getListItems = (): ListItem[] => {
       const lowerQ = searchQuery.toLowerCase();
+      
+      // FIX: Safely handle null/undefined strings
+      const filterText = (t: string | null | undefined) => (t || '').toLowerCase().includes(lowerQ);
+
+      // Helper to map data to list items
+      const mapMessage = (m: ContactMessage): ListItem => ({
+          id: m.id, title: m.name, subtitle: m.subject, date: new Date(m.date).toLocaleDateString(),
+          read: m.read, replied: !!m.replied, raw: m, type: 'message'
+      });
+      const mapSent = (e: SentEmail): ListItem => ({
+          id: e.id, title: `To: ${e.recipient}`, subtitle: e.subject, date: new Date(e.created_at).toLocaleDateString(),
+          read: true, replied: false, status: e.status, raw: e, type: 'sent'
+      });
+      const mapDraft = (d: Draft): ListItem => ({
+          id: d.id, title: d.recipient || '(No Recipient)', subtitle: d.subject || '(No Subject)',
+          date: new Date(d.updated_at).toLocaleDateString(), read: true, replied: false, raw: d, type: 'draft'
+      });
+
+      let items: ListItem[] = [];
+
       switch (activeFolder) {
           case 'inbox':
-              return messages.filter(m => 
-                  m.name.toLowerCase().includes(lowerQ) || 
-                  m.subject.toLowerCase().includes(lowerQ)
-              ).map(m => ({
-                  id: m.id,
-                  title: m.name,
-                  subtitle: m.subject,
-                  date: m.date,
-                  read: m.read,
-                  replied: m.replied,
-                  raw: m
-              }));
+              items = messages.filter(m => !m.deleted_at && (filterText(m.name) || filterText(m.subject))).map(mapMessage);
+              break;
           case 'sent':
-              return sentEmails.filter(e => 
-                  e.to.some(t => t.toLowerCase().includes(lowerQ)) || 
-                  e.subject.toLowerCase().includes(lowerQ)
-              ).map(e => ({
-                  id: e.id,
-                  title: `To: ${e.to.join(', ')}`,
-                  subtitle: e.subject,
-                  date: new Date(e.created_at).toLocaleDateString(),
-                  read: true,
-                  replied: false,
-                  raw: e
-              }));
+              items = sentEmails.filter(e => !e.deleted_at && (filterText(e.recipient) || filterText(e.subject))).map(mapSent);
+              break;
           case 'drafts':
-              return drafts.filter(d => 
-                  (d.recipient || '').toLowerCase().includes(lowerQ) || 
-                  (d.subject || '').toLowerCase().includes(lowerQ)
-              ).map(d => ({
-                  id: d.id,
-                  title: d.recipient || '(No Recipient)',
-                  subtitle: d.subject || '(No Subject)',
-                  date: new Date(d.updated_at).toLocaleDateString(),
-                  read: true,
-                  replied: false,
-                  raw: d
-              }));
-          default: return [];
+              items = drafts.filter(d => !d.deleted_at && (filterText(d.recipient) || filterText(d.subject))).map(mapDraft);
+              break;
+          case 'trash':
+              const trashedMessages = messages.filter(m => m.deleted_at).map(mapMessage);
+              const trashedSent = sentEmails.filter(e => e.deleted_at).map(mapSent);
+              const trashedDrafts = drafts.filter(d => d.deleted_at).map(mapDraft);
+              items = [...trashedMessages, ...trashedSent, ...trashedDrafts]
+                  .filter(i => filterText(i.title) || filterText(i.subtitle));
+              break;
       }
+      
+      return items.sort((a, b) => new Date(b.raw['created_at'] || b.raw['date'] || b.raw['updated_at']).getTime() - new Date(a.raw['created_at'] || a.raw['date'] || a.raw['updated_at']).getTime());
   };
 
   const listItems = getListItems();
   const selectedItem = listItems.find(i => i.id === selectedId);
 
   return (
-    <div className="flex h-[calc(100vh-100px)] bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in duration-500">
+    <div className="flex h-[calc(100vh-100px)] bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in duration-500 relative">
       
+      {/* Media Library Modal */}
+      {showMediaLibrary && (
+        <MediaLibrary 
+            onSelect={handleAttach} 
+            onClose={() => setShowMediaLibrary(false)} 
+        />
+      )}
+
       {/* Sidebar - Folders */}
       <div className="w-64 bg-slate-50 border-r border-slate-200 flex flex-col hidden md:flex">
         <div className="p-4">
@@ -209,8 +272,8 @@ export default function InboxManager() {
                 className={`w-full flex items-center justify-between px-4 py-2.5 rounded-md text-sm font-medium transition-colors ${activeFolder === 'inbox' ? 'bg-white text-primary shadow-sm ring-1 ring-slate-100' : 'text-slate-600 hover:bg-slate-200/50'}`}
             >
                 <div className="flex items-center gap-3"><Inbox size={18} /> Inbox</div>
-                {messages.filter(m => !m.read).length > 0 && (
-                    <span className="bg-primary text-white text-[10px] font-bold py-0.5 px-2 rounded-full">{messages.filter(m => !m.read).length}</span>
+                {messages.filter(m => !m.read && !m.deleted_at).length > 0 && (
+                    <span className="bg-primary text-white text-[10px] font-bold py-0.5 px-2 rounded-full">{messages.filter(m => !m.read && !m.deleted_at).length}</span>
                 )}
             </button>
             <button 
@@ -224,8 +287,16 @@ export default function InboxManager() {
                 className={`w-full flex items-center justify-between px-4 py-2.5 rounded-md text-sm font-medium transition-colors ${activeFolder === 'drafts' ? 'bg-white text-primary shadow-sm ring-1 ring-slate-100' : 'text-slate-600 hover:bg-slate-200/50'}`}
             >
                 <div className="flex items-center gap-3"><FileText size={18} /> Drafts</div>
-                {drafts.length > 0 && <span className="text-slate-400 font-normal text-xs">{drafts.length}</span>}
+                {drafts.filter(d => !d.deleted_at).length > 0 && <span className="text-slate-400 font-normal text-xs">{drafts.filter(d => !d.deleted_at).length}</span>}
             </button>
+            <div className="pt-4 mt-2 border-t border-slate-200/60">
+                <button 
+                    onClick={() => { setActiveFolder('trash'); setSelectedId(null); setIsComposing(false); }}
+                    className={`w-full flex items-center justify-between px-4 py-2.5 rounded-md text-sm font-medium transition-colors ${activeFolder === 'trash' ? 'bg-white text-red-600 shadow-sm ring-1 ring-red-100' : 'text-slate-600 hover:bg-red-50 hover:text-red-600'}`}
+                >
+                    <div className="flex items-center gap-3"><Trash2 size={18} /> Trash</div>
+                </button>
+            </div>
         </nav>
       </div>
 
@@ -256,12 +327,14 @@ export default function InboxManager() {
                 listItems.map(item => (
                     <div 
                         key={item.id}
-                        onClick={() => handleSelectMessage(item.id, activeFolder === 'inbox' ? item.raw as ContactMessage : undefined)}
+                        onClick={() => handleSelectItem(item)}
                         className={`p-4 border-b border-slate-100 cursor-pointer transition-all hover:bg-slate-50 ${selectedId === item.id ? 'bg-blue-50/50 border-l-4 border-l-primary' : 'border-l-4 border-l-transparent'} ${!item.read ? 'bg-slate-50' : ''}`}
                     >
                         <div className="flex justify-between items-start mb-1">
                             <h4 className={`text-sm truncate pr-2 flex items-center gap-1.5 ${!item.read ? 'font-bold text-slate-900' : 'font-medium text-slate-700'}`}>
                                 {item.replied && <CornerUpLeft size={12} className="text-green-500 flex-shrink-0" />}
+                                {item.status === 'sent' && <CheckCircle2 size={12} className="text-green-500 flex-shrink-0" />}
+                                {item.status === 'failed' && <AlertOctagon size={12} className="text-red-500 flex-shrink-0" />}
                                 {item.title}
                             </h4>
                             <span className="text-[10px] text-slate-400 whitespace-nowrap">{item.date}</span>
@@ -316,11 +389,26 @@ export default function InboxManager() {
                         className="flex-1 resize-none mt-4 p-4 border border-slate-200 rounded-md focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none text-sm leading-relaxed transition-shadow"
                         placeholder="Type your message here..."
                     />
+                    
+                    {/* Attachments List */}
+                    {composeData.attachments.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-2">
+                            {composeData.attachments.map((url, i) => (
+                                <div key={i} className="flex items-center gap-2 bg-slate-100 text-xs px-2 py-1 rounded-md text-slate-600">
+                                    <span className="truncate max-w-[150px]">{url.split('/').pop()}</span>
+                                    <button onClick={() => removeAttachment(i)} className="text-slate-400 hover:text-red-500"><X size={12} /></button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
                 <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-between items-center">
                     <div className="flex gap-2 text-slate-400">
-                        {/* Placeholder for future attachment features */}
-                        <button className="p-2 hover:bg-slate-200 rounded-full transition-colors" title="Attach File (Coming Soon)">
+                        <button 
+                            onClick={() => setShowMediaLibrary(true)}
+                            className="p-2 hover:bg-slate-200 rounded-full transition-colors text-primary" 
+                            title="Attach File"
+                        >
                             <Paperclip size={18} />
                         </button>
                     </div>
@@ -348,45 +436,67 @@ export default function InboxManager() {
                             <div>
                                 <div className="font-bold text-slate-800 text-sm">
                                     {selectedItem.title}
-                                    {activeFolder === 'inbox' && <span className="text-slate-400 font-normal ml-1">&lt;{(selectedItem.raw as ContactMessage).email}&gt;</span>}
+                                    {selectedItem.type === 'message' && <span className="text-slate-400 font-normal ml-1">&lt;{(selectedItem.raw as ContactMessage).email}&gt;</span>}
                                 </div>
-                                <div className="text-xs text-slate-500 mt-0.5">
+                                <div className="text-xs text-slate-500 mt-0.5 flex items-center gap-2">
                                     {activeFolder === 'sent' ? 'Sent on ' : 'Received on '}{selectedItem.date}
+                                    
+                                    {/* Status Indicators for Sent Emails */}
+                                    {selectedItem.status === 'sent' && <span className="text-green-600 bg-green-50 px-2 py-0.5 rounded-full flex items-center gap-1 text-[10px] font-medium"><CheckCircle2 size={10} /> Sent</span>}
+                                    {selectedItem.status === 'failed' && <span className="text-red-600 bg-red-50 px-2 py-0.5 rounded-full flex items-center gap-1 text-[10px] font-medium"><AlertOctagon size={10} /> Failed</span>}
                                 </div>
                             </div>
                         </div>
                     </div>
                     <div className="flex gap-2">
                         {activeFolder === 'inbox' && (
-                            <button 
-                                onClick={() => handleCompose({ to: (selectedItem.raw as ContactMessage).email, subject: `Re: ${selectedItem.subtitle}` })}
-                                className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 hover:border-primary hover:text-primary text-slate-700 rounded-md text-sm font-medium transition-all shadow-sm"
-                            >
-                                <CornerUpLeft size={16} /> Reply
-                            </button>
+                            <>
+                                <button 
+                                    onClick={handleMarkUnread}
+                                    className="p-2 text-slate-500 hover:text-primary hover:bg-slate-100 rounded-md transition-colors"
+                                    title="Mark as Unread"
+                                >
+                                    <MailOpen size={20} />
+                                </button>
+                                <button 
+                                    onClick={() => handleCompose({ to: (selectedItem.raw as ContactMessage).email, subject: `Re: ${selectedItem.subtitle}` })}
+                                    className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 hover:border-primary hover:text-primary text-slate-700 rounded-md text-sm font-medium transition-all shadow-sm"
+                                >
+                                    <CornerUpLeft size={16} /> Reply
+                                </button>
+                            </>
                         )}
-                        {activeFolder !== 'sent' && (
+                        
+                        {activeFolder === 'trash' ? (
                             <button 
-                                onClick={handleDeleteCurrent}
-                                className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
-                                title="Delete"
+                                onClick={handleRestore}
+                                className="p-2 text-slate-500 hover:text-green-600 hover:bg-green-50 rounded-md transition-colors"
+                                title="Restore"
                             >
-                                <Trash2 size={20} />
+                                <RotateCcw size={20} />
                             </button>
-                        )}
+                        ) : null}
+
+                        <button 
+                            onClick={handleDelete}
+                            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                            title={activeFolder === 'trash' ? "Delete Permanently" : "Move to Trash"}
+                        >
+                            <Trash2 size={20} />
+                        </button>
                     </div>
                 </div>
                 
                 {/* Body */}
                 <div className="flex-1 p-8 overflow-y-auto">
                     <div className="prose prose-slate max-w-none text-sm leading-7 text-slate-700">
-                        {activeFolder === 'inbox' && (selectedItem.raw as ContactMessage).message.split('\n').map((line, i) => (
+                        {selectedItem.type === 'message' && (selectedItem.raw as ContactMessage).message.split('\n').map((line, i) => (
                             <p key={i} className="mb-2">{line}</p>
                         ))}
                         
-                        {(activeFolder === 'sent' || activeFolder === 'drafts') && (
+                        {(selectedItem.type === 'sent' || selectedItem.type === 'draft') && (
                             <div className="whitespace-pre-wrap font-sans text-slate-700">
-                                {(activeFolder === 'drafts' ? (selectedItem.raw as Draft).message : (selectedItem.raw as ResendEmail).text || 'No text content available.')}
+                                {(selectedItem.type === 'draft' ? (selectedItem.raw as Draft).message : (selectedItem.raw as SentEmail).text || 'No text content available.')}
                             </div>
                         )}
                     </div>

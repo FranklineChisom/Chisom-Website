@@ -69,6 +69,7 @@ export interface ContactMessage {
   message: string;
   read: boolean;
   replied?: boolean;
+  deleted_at?: string | null;
 }
 
 export interface Subscriber {
@@ -77,7 +78,7 @@ export interface Subscriber {
   date: string;
 }
 
-// --- NEW TYPES FOR EMAIL CLIENT ---
+// --- EMAIL CLIENT TYPES ---
 
 export interface Draft {
   id: string;
@@ -85,8 +86,21 @@ export interface Draft {
   subject: string;
   message: string;
   updated_at: string;
+  deleted_at?: string | null;
 }
 
+export interface SentEmail {
+  id: string;
+  recipient: string;
+  subject: string;
+  html?: string;
+  text: string;
+  status: 'sent' | 'failed';
+  created_at: string;
+  deleted_at?: string | null;
+}
+
+// Keep ResendEmail for API compatibility if needed, but SentEmail is preferred for UI
 export interface ResendEmail {
   id: string;
   from: string;
