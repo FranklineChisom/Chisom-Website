@@ -2,18 +2,18 @@ import React from 'react';
 import Image from 'next/image';
 import Section from '@/components/Section';
 import { Download } from 'lucide-react';
-import { EXPERTISE } from '@/constants'; // Ensure constants are moved to src/constants.ts
+import { EXPERTISE } from '@/constants';
 import { supabase } from '@/lib/supabase';
 import type { Metadata } from 'next';
 
-// 1. SEO Replacement
 export const metadata: Metadata = {
-  title: 'About Me',
+  title: 'About',
   description: 'Junior Research Fellow at Lex Lata Centre specializing in international financial law and African capital markets.',
   openGraph: {
     title: 'About Frankline Chisom Ebere',
     description: 'Junior Research Fellow at Lex Lata Centre specializing in international financial law.',
     url: 'https://franklinechisom.com/about',
+    images: ['/images/Chisom.jpg']
   }
 };
 
@@ -25,7 +25,6 @@ async function getAboutData() {
 export default async function About() {
   const siteConfig = await getAboutData();
 
-  // Fallback if DB is empty
   const aboutImage = siteConfig?.about_image || '/images/Chisom.jpg';
   const name = siteConfig?.name || 'Frankline Chisom Ebere';
 
@@ -35,14 +34,13 @@ export default async function About() {
         {/* Image Column */}
         <div className="md:col-span-5 lg:col-span-4">
             <div className="aspect-[3/4] bg-slate-200 rounded-none overflow-hidden shadow-lg relative">
-                {/* 2. Image Optimization */}
                 <Image 
                     src={aboutImage} 
                     alt={name} 
                     width={400}
                     height={600}
                     className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700 ease-in-out"
-                    priority // Loads this image immediately
+                    priority
                 />
             </div>
             <div className="mt-4 text-xs text-slate-400 font-mono text-center">

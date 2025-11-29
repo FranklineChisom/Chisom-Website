@@ -8,7 +8,6 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'Blog',
   description: 'Articles on law, policy, and African economics by Frankline Chisom Ebere.',
-  keywords: 'legal blog, law articles, AfCFTA analysis, arbitration insights, African capital markets',
   openGraph: {
     title: 'Blog | Frankline Chisom Ebere',
     description: 'Articles on law, policy, and African economics.',
@@ -16,7 +15,6 @@ export const metadata: Metadata = {
   }
 };
 
-// Fetch data on the server
 async function getBlogPosts() {
   const { data } = await supabase
     .from('blog_posts')
@@ -24,12 +22,10 @@ async function getBlogPosts() {
     .eq('published', true)
     .order('date', { ascending: false });
 
-  // Fallback to constants if DB is empty or fails
   if (!data || data.length === 0) {
     return BLOG_POSTS;
   }
 
-  // Map snake_case DB fields to camelCase TS types
   return data.map((p: any) => ({
     id: p.id,
     slug: p.slug,
@@ -46,6 +42,5 @@ async function getBlogPosts() {
 
 export default async function BlogPage() {
   const blogPosts = await getBlogPosts();
-
   return <BlogList initialPosts={blogPosts} />;
 }

@@ -5,12 +5,10 @@ import { useSearchParams } from 'next/navigation';
 import { ArrowLeft, Calendar, Clock, Mail, Loader2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import Section from '@/components/Section';
-import { usePageTitle } from '@/hooks/usePageTitle';
 import { supabase } from '@/lib/supabase';
 
 // 1. Create a sub-component that handles the search params logic
 const PreviewContent: React.FC = () => {
-  usePageTitle('Live Preview');
   const searchParams = useSearchParams();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -18,6 +16,10 @@ const PreviewContent: React.FC = () => {
 
   const type = searchParams.get('type') as 'blog' | 'newsletter';
   const id = searchParams.get('id');
+
+  useEffect(() => {
+    document.title = 'Live Preview | Frankline Chisom Ebere';
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {

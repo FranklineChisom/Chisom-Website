@@ -1,18 +1,67 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Providers } from "./providers";
 import ClientLayout from "@/components/ClientLayout";
 
-// Global Metadata (SEO)
+// 1. Viewport configuration (Next.js 14+)
+export const viewport: Viewport = {
+  themeColor: '#0f2f38',
+  width: 'device-width',
+  initialScale: 1,
+};
+
+// 2. Global Metadata Defaults
 export const metadata: Metadata = {
+  metadataBase: new URL('https://franklinechisom.com'),
   title: {
     template: '%s | Frankline Chisom Ebere',
     default: 'Frankline Chisom Ebere',
   },
   description: "Junior Research Fellow at Lex Lata Centre specializing in International Financial Law, African capital markets, and AfCFTA regulatory harmonization.",
-  metadataBase: new URL('https://franklinechisom.com'),
+  keywords: ["International Financial Law", "AfCFTA", "African Capital Markets", "Legal Research", "Nigeria Law", "Trade Law", "Dispute Resolution"],
+  authors: [{ name: "Frankline Chisom Ebere" }],
+  creator: "Frankline Chisom Ebere",
+  publisher: "Frankline Chisom Ebere",
+  
+  // OpenGraph (Facebook, LinkedIn, etc.)
+  openGraph: {
+    siteName: 'Frankline Chisom Ebere',
+    locale: 'en_US',
+    type: 'website',
+    url: 'https://franklinechisom.com',
+    images: [
+      {
+        url: '/images/Chisom.jpg', // Default OG Image
+        width: 1200,
+        height: 630,
+        alt: 'Frankline Chisom Ebere',
+      },
+    ],
+  },
+
+  // Twitter
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Frankline Chisom Ebere',
+    creator: '@Frankline_Rolis',
+    images: ['/images/Chisom.jpg'],
+  },
+
+  // Robot directives
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+
   icons: {
-    icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230f2f38'/><text x='50%' y='58%' dominant-baseline='middle' text-anchor='middle' font-size='70' font-family='serif' fill='white'>C</text></svg>",
+    icon: "/favicon.ico",
   }
 };
 
@@ -24,13 +73,11 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className="scroll-smooth">
       <head>
-        {/* Fonts fetched directly from Google Fonts to match Vite version exactly */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet" />
       </head>
       <body className="font-sans bg-white text-slate-800 antialiased">
-        {/* Providers wraps the entire app to give access to DataContext and ToastContext */}
         <Providers>
           <ClientLayout>
             {children}

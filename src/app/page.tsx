@@ -7,12 +7,10 @@ import NewsletterForm from '@/components/NewsletterForm';
 import { SITE_CONFIG, BLOG_POSTS, NEWSLETTERS } from '@/constants';
 import { BlogPost, Newsletter, SiteConfig } from '@/types';
 
-// Fetch data with fallback to constants (Visual Parity Assurance)
+// Fetch data
 async function getData() {
-  // 1. Fetch Site Config
   const { data: dbConfig } = await supabase.from('site_config').select('*').single();
   
-  // Map DB (snake_case) to App (camelCase) or use Constant
   const siteConfig: SiteConfig = dbConfig ? {
     name: dbConfig.name,
     role: dbConfig.role,
@@ -29,7 +27,6 @@ async function getData() {
     analyticsUrl: dbConfig.analytics_url
   } : SITE_CONFIG;
 
-  // 2. Fetch Latest 3 Blog Posts
   const { data: dbPosts } = await supabase
     .from('blog_posts')
     .select('*')
@@ -50,7 +47,6 @@ async function getData() {
     published: p.published
   })) : BLOG_POSTS.slice(0, 3);
 
-  // 3. Fetch Latest 2 Newsletters
   const { data: dbNewsletters } = await supabase
     .from('newsletters')
     .select('*')
@@ -75,8 +71,32 @@ async function getData() {
 export default async function Home() {
   const { siteConfig, recentPosts, recentNewsletters } = await getData();
 
+  // Structured Data for SEO
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "name": siteConfig.name,
+    "url": "https://franklinechisom.com",
+    "jobTitle": siteConfig.role,
+    "image": siteConfig.aboutImage,
+    "worksFor": {
+      "@type": "Organization",
+      "name": "Lex Lata Centre for Int'l Law & Comparative Constitutionalism"
+    },
+    "sameAs": [
+      siteConfig.social.linkedin,
+      siteConfig.social.twitter,
+      siteConfig.social.scholar,
+      siteConfig.social.ssrn
+    ].filter(Boolean)
+  };
+
   return (
     <div className="space-y-24 md:space-y-32">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       
       {/* Hero Section */}
       <Section className="max-w-5xl mx-auto px-6 pt-16 md:pt-24">
@@ -87,7 +107,7 @@ export default async function Home() {
         
         <div className="max-w-2xl border-l-2 border-accent pl-8 py-2 mb-12">
           <p className="text-lg md:text-xl text-slate-600 font-light leading-relaxed">
-            Researching the functional harmonisation of capital markets and the regulatory frameworks essential for economic integration across the continent.
+            {siteConfig.tagline}
           </p>
         </div>
 
@@ -171,10 +191,9 @@ export default async function Home() {
               Law, policy, and the economic future of Africa.
             </h2>
             <p className="text-slate-300 font-light leading-relaxed mb-8 text-lg">
-              Join a growing community of students, academics and practitioners. I share fresh perspectives on law, policy, and markets in Africa and explore ideas that reach far beyond.
+              Join a growing community of students, academics and practitioners. I share fresh perspectives on law, policy, and markets in Africa.
             </p>
             
-            {/* Interactive Client Component */}
             <NewsletterForm />
             
           </div>
@@ -197,11 +216,10 @@ export default async function Home() {
                 </div>
               ))}
               {recentNewsletters.length === 0 && (
-                <p className="text-slate-500 italic">No issues published yet. Be the first to subscribe.</p>
+                <p className="text-slate-500 italic">No issues published yet.</p>
               )}
             </div>
             
-            {/* Added missing Archive Link check to match Vite logic more closely, though mostly stylistic preference here */}
             <div className="mt-8 pt-6 border-t border-white/5">
                 <Link href="/newsletters" className="text-sm text-slate-300 hover:text-white transition-colors flex items-center gap-2">
                     View Full Archive <ArrowRight size={14} />

@@ -1,12 +1,9 @@
 import React from 'react';
-import { ExternalLink } from 'lucide-react';
-import Pagination from '@/components/Pagination';
-import SearchBar from '@/components/SearchBar';
-import Section from '@/components/Section';
 import { supabase } from '@/lib/supabase';
 import { PUBLICATIONS } from '@/constants';
 import { Publication } from '@/types';
 import type { Metadata } from 'next';
+import ResearchList from '@/components/ResearchList';
 
 export const metadata: Metadata = {
   title: 'Research & Publications',
@@ -19,7 +16,6 @@ export const metadata: Metadata = {
   }
 };
 
-// Fetch data on server
 async function getPublications() {
   const { data } = await supabase
     .from('publications')
@@ -43,9 +39,6 @@ async function getPublications() {
     published: pub.published
   })) as Publication[];
 }
-
-// Client Component for interactive list
-import ResearchList from '@/components/ResearchList';
 
 export default async function ResearchPage() {
   const publications = await getPublications();

@@ -1,18 +1,20 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useData } from '@/contexts/DataContext';
-import { usePageTitle } from '@/hooks/usePageTitle';
 
 export default function LoginPage() {
-  usePageTitle('Admin Login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useData();
   const router = useRouter();
+
+  useEffect(() => {
+    document.title = 'Admin Login | Frankline Chisom Ebere';
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

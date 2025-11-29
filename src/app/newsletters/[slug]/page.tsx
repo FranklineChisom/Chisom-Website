@@ -9,7 +9,7 @@ import { NEWSLETTERS } from '@/constants';
 import { Newsletter } from '@/types';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import NewsletterSubscribeBox from '@/components/NewsletterSubscribeBox'; // Extract client logic
+import NewsletterSubscribeBox from '@/components/NewsletterSubscribeBox';
 
 export const revalidate = 60;
 
@@ -17,9 +17,7 @@ interface Props {
   params: Promise<{ slug: string }>;
 }
 
-// Fetch Helper
 async function getNewsletter(slug: string): Promise<Newsletter | null> {
-  // 1. Try Database
   const { data, error } = await supabase
     .from('newsletters')
     .select('*')
@@ -39,7 +37,6 @@ async function getNewsletter(slug: string): Promise<Newsletter | null> {
     };
   }
 
-  // 2. Try ID fallback
   const { data: dataById } = await supabase
     .from('newsletters')
     .select('*')
@@ -59,12 +56,10 @@ async function getNewsletter(slug: string): Promise<Newsletter | null> {
     };
   }
 
-  // 3. Fallback to Constants
   const constantItem = NEWSLETTERS.find(n => n.slug === slug || n.id === slug);
   return constantItem || null;
 }
 
-// Generate Metadata
 export async function generateMetadata(props: Props): Promise<Metadata> {
   const params = await props.params;
   const post = await getNewsletter(params.slug);
@@ -82,6 +77,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
       images: post.coverImage ? [{ url: post.coverImage }] : [],
       type: 'article',
       publishedTime: post.date,
+      url: `https://franklinechisom.com/newsletters/${post.slug}`,
     },
   };
 }
@@ -135,7 +131,6 @@ export default async function NewsletterPost(props: Props) {
              <p className="text-slate-600 text-sm leading-relaxed mb-6">
                  If you enjoyed this issue, join the list to get the next one directly in your inbox.
              </p>
-             {/* Client Component for subscription logic */}
              <NewsletterSubscribeBox />
         </div>
       </Section>

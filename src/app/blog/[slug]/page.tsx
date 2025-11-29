@@ -3,23 +3,19 @@ import Link from 'next/link';
 import { ArrowLeft, Clock, Calendar } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import Section from '@/components/Section';
-import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
 import { BLOG_POSTS } from '@/constants';
 import { BlogPost } from '@/types';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
-// Ensure data is revalidated every 60 seconds
 export const revalidate = 60;
 
 interface Props {
   params: Promise<{ slug: string }>;
 }
 
-// Fetch Data Helper
 async function getBlogPost(slug: string): Promise<BlogPost | null> {
-  // 1. Try Database
   const { data, error } = await supabase
     .from('blog_posts')
     .select('*')
@@ -41,7 +37,6 @@ async function getBlogPost(slug: string): Promise<BlogPost | null> {
     };
   }
 
-  // 2. Try ID fallback for DB
   const { data: dataById } = await supabase
     .from('blog_posts')
     .select('*')
@@ -63,12 +58,10 @@ async function getBlogPost(slug: string): Promise<BlogPost | null> {
     };
   }
 
-  // 3. Fallback to Constants
   const constantPost = BLOG_POSTS.find(p => p.slug === slug || p.id === slug);
   return constantPost || null;
 }
 
-// Generate Metadata
 export async function generateMetadata(props: Props): Promise<Metadata> {
   const params = await props.params;
   const post = await getBlogPost(params.slug);
@@ -87,11 +80,17 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
       type: 'article',
       publishedTime: post.date,
       authors: ['Frankline Chisom Ebere'],
+      url: `https://franklinechisom.com/blog/${post.slug}`,
     },
+    twitter: {
+      card: 'summary_large_image',
+      title: post.title,
+      description: post.excerpt,
+      images: post.coverImage ? [post.coverImage] : [],
+    }
   };
 }
 
-// Page Component
 export default async function BlogPostPage(props: Props) {
   const params = await props.params;
   const post = await getBlogPost(params.slug);
@@ -125,7 +124,6 @@ export default async function BlogPostPage(props: Props) {
 
         {post.coverImage && (
           <div className="mb-10 relative w-full h-auto">
-            {/* Using standard img tag for reliability with external URLs during migration, can be optimized later */}
             <img 
               src={post.coverImage} 
               alt={post.title}
