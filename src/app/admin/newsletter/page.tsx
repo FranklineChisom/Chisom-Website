@@ -194,19 +194,19 @@ const NewsletterManager: React.FC = () => {
       {isEditing ? (
       <div className="max-w-4xl animate-in fade-in slide-in-from-bottom-4 duration-500">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-serif text-slate-800">{current.title ? 'Edit Issue' : 'New Issue'}</h2>
+          <h2 className="text-xl md:text-2xl font-serif text-slate-800">{current.title ? 'Edit Issue' : 'New Issue'}</h2>
           <div className="flex gap-2">
              <button 
                 onClick={handlePreview} 
                 disabled={isSaving}
-                className="flex items-center gap-2 px-4 py-2 text-primary bg-primary/5 hover:bg-primary/10 border border-primary/10 transition-colors text-sm font-medium rounded-full"
+                className="flex items-center gap-2 px-3 md:px-4 py-2 text-primary bg-primary/5 hover:bg-primary/10 border border-primary/10 transition-colors text-sm font-medium rounded-full"
              >
                 <Eye size={16} /> <span className="hidden sm:inline">Preview</span>
              </button>
              <button onClick={() => setIsEditing(false)} className="text-slate-400 hover:text-slate-800 p-2 hover:bg-slate-100 rounded-full transition-colors"><X size={20}/></button>
           </div>
         </div>
-        <form onSubmit={(e) => e.preventDefault()} className="space-y-6 bg-white p-8 rounded-xl shadow-sm border border-slate-200/60">
+        <form onSubmit={(e) => e.preventDefault()} className="space-y-6 bg-white p-4 md:p-8 rounded-xl shadow-sm border border-slate-200/60">
           <div>
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Issue Title</label>
             <input 
@@ -244,7 +244,7 @@ const NewsletterManager: React.FC = () => {
                         onClick={() => setShowMediaLibrary(true)}
                         className="px-4 py-2 bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-800 rounded-md transition-colors flex items-center gap-2 whitespace-nowrap font-medium"
                     >
-                        <ImageIcon size={18} /> Library
+                        <ImageIcon size={18} /> <span className="hidden sm:inline">Library</span>
                     </button>
                 </div>
                 {current.coverImage && (
@@ -275,13 +275,13 @@ const NewsletterManager: React.FC = () => {
             />
           </div>
 
-          <div className="flex justify-end gap-3 pt-6 border-t border-slate-100">
-            <button type="button" onClick={() => setIsEditing(false)} className="px-5 py-2.5 text-slate-600 hover:bg-slate-100 rounded-md font-medium transition-colors">Cancel</button>
+          <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t border-slate-100">
+            <button type="button" onClick={() => setIsEditing(false)} className="px-5 py-2.5 text-slate-600 hover:bg-slate-100 rounded-md font-medium transition-colors w-full sm:w-auto text-center">Cancel</button>
             <button 
                 type="button" 
                 onClick={() => handleSaveAndClose(false)} 
                 disabled={isSaving} 
-                className="px-6 py-2.5 border border-slate-300 text-slate-700 rounded-md hover:bg-slate-50 hover:border-slate-400 font-medium disabled:opacity-50 transition-all shadow-sm flex items-center gap-2"
+                className="px-6 py-2.5 border border-slate-300 text-slate-700 rounded-md hover:bg-slate-50 hover:border-slate-400 font-medium disabled:opacity-50 transition-all shadow-sm flex items-center justify-center gap-2 w-full sm:w-auto"
             >
                 {isSaving && <Loader2 size={16} className="animate-spin" />}
                 {isSaving ? 'Saving...' : 'Save Draft'}
@@ -290,7 +290,7 @@ const NewsletterManager: React.FC = () => {
                 type="button" 
                 onClick={() => handleSaveAndClose(true)} 
                 disabled={isSaving} 
-                className="px-6 py-2.5 bg-primary text-white rounded-md hover:bg-slate-800 font-medium disabled:opacity-50 flex items-center gap-2 shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5"
+                className="px-6 py-2.5 bg-primary text-white rounded-md hover:bg-slate-800 font-medium disabled:opacity-50 flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 w-full sm:w-auto"
             >
                 {isSaving ? <Loader2 className="animate-spin" size={18} /> : null}
                 {isSaving ? 'Saving...' : (current.published ? 'Update Issue' : 'Publish Issue')}
@@ -300,34 +300,37 @@ const NewsletterManager: React.FC = () => {
       </div>
     ) : (
     <div className="animate-in fade-in duration-500">
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
             <h2 className="text-3xl font-serif text-slate-800">Newsletter</h2>
             <p className="text-slate-500 text-sm mt-1">Manage email campaigns and issues</p>
         </div>
-        <button onClick={handleCreate} className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-md hover:bg-slate-800 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5 font-medium">
+        <button onClick={handleCreate} className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-md hover:bg-slate-800 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5 font-medium w-full md:w-auto justify-center">
           <Plus size={18} /> New Issue
         </button>
       </div>
       <div className="bg-white rounded-xl shadow-sm border border-slate-200/60 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse min-w-[600px]">
             <thead className="bg-slate-50/50 border-b border-slate-100 text-xs font-semibold text-slate-500 uppercase tracking-wider">
               <tr>
-                <th className="p-5 min-w-[250px]">Title</th>
-                <th className="p-5">Status</th>
-                <th className="p-5">Date</th>
-                <th className="p-5 text-right">Actions</th>
+                <th className="p-3 md:p-5 min-w-[250px]">Title</th>
+                <th className="p-3 md:p-5">Status</th>
+                <th className="p-3 md:p-5 hidden sm:table-cell">Date</th>
+                <th className="p-3 md:p-5 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-sm">
               {paginatedNewsletters.map(item => (
                 <tr key={item.id} className="hover:bg-slate-50/80 transition-colors group">
-                  <td className="p-5 font-medium text-slate-800">{item.title}</td>
-                  <td className="p-5"><StatusBadge published={item.published} /></td>
-                  <td className="p-5 text-slate-500 font-mono text-xs whitespace-nowrap">{item.date}</td>
-                  <td className="p-5 text-right whitespace-nowrap">
-                    <div className="flex items-center justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                  <td className="p-3 md:p-5 font-medium text-slate-800">
+                    {item.title}
+                    <div className="sm:hidden text-xs text-slate-400 mt-1">{item.date}</div>
+                  </td>
+                  <td className="p-3 md:p-5"><StatusBadge published={item.published} /></td>
+                  <td className="p-3 md:p-5 text-slate-500 font-mono text-xs whitespace-nowrap hidden sm:table-cell">{item.date}</td>
+                  <td className="p-3 md:p-5 text-right whitespace-nowrap">
+                    <div className="flex items-center justify-end gap-1 opacity-100 md:opacity-60 md:group-hover:opacity-100 transition-opacity">
                         <button onClick={() => handleEdit(item)} className="p-2 text-slate-400 hover:text-primary hover:bg-primary/5 rounded-full transition-colors" title="Edit">
                             <Edit2 size={16} />
                         </button>

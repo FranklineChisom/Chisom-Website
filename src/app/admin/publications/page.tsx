@@ -169,10 +169,10 @@ export default function PubManager() {
       {isEditing ? (
         <div className="max-w-4xl animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-serif text-slate-800">{currentPub.title ? 'Edit Publication' : 'New Publication'}</h2>
+            <h2 className="text-xl md:text-2xl font-serif text-slate-800">{currentPub.title ? 'Edit Publication' : 'New Publication'}</h2>
             <button onClick={() => setIsEditing(false)} className="text-slate-400 hover:text-slate-800 p-2 hover:bg-slate-100 rounded-full transition-colors"><X size={20} /></button>
           </div>
-          <form onSubmit={(e) => e.preventDefault()} className="space-y-6 bg-white p-8 rounded-xl shadow-sm border border-slate-200/60">
+          <form onSubmit={(e) => e.preventDefault()} className="space-y-6 bg-white p-4 md:p-8 rounded-xl shadow-sm border border-slate-200/60">
             <div>
               <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Title</label>
               <input 
@@ -271,13 +271,13 @@ export default function PubManager() {
                 placeholder="https://..."
               />
             </div>
-            <div className="flex justify-end gap-3 pt-6 border-t border-slate-100">
-              <button type="button" onClick={() => setIsEditing(false)} className="px-5 py-2.5 text-slate-600 hover:bg-slate-100 rounded-md font-medium transition-colors">Cancel</button>
+            <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t border-slate-100">
+              <button type="button" onClick={() => setIsEditing(false)} className="px-5 py-2.5 text-slate-600 hover:bg-slate-100 rounded-md font-medium transition-colors w-full sm:w-auto text-center">Cancel</button>
               <button 
                 type="button" 
                 onClick={() => handleSave(false)} 
                 disabled={isSaving} 
-                className="px-6 py-2.5 border border-slate-300 text-slate-700 rounded-md hover:bg-slate-50 hover:border-slate-400 font-medium disabled:opacity-50 transition-all shadow-sm flex items-center gap-2"
+                className="px-6 py-2.5 border border-slate-300 text-slate-700 rounded-md hover:bg-slate-50 hover:border-slate-400 font-medium disabled:opacity-50 transition-all shadow-sm flex items-center justify-center gap-2 w-full sm:w-auto"
               >
                   {isSaving && !currentPub.published && <Loader2 size={16} className="animate-spin" />}
                   {isSaving && !currentPub.published ? 'Saving...' : 'Save Draft'}
@@ -286,7 +286,7 @@ export default function PubManager() {
                 type="button" 
                 onClick={() => handleSave(true)} 
                 disabled={isSaving} 
-                className="px-6 py-2.5 bg-primary text-white rounded-md hover:bg-slate-800 font-medium disabled:opacity-50 flex items-center gap-2 shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5"
+                className="px-6 py-2.5 bg-primary text-white rounded-md hover:bg-slate-800 font-medium disabled:opacity-50 flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 w-full sm:w-auto"
               >
                   {isSaving && currentPub.published && <Loader2 size={16} className="animate-spin" />}
                   {isSaving && currentPub.published ? 'Publishing...' : (currentPub.published ? 'Update' : 'Publish')}
@@ -296,40 +296,40 @@ export default function PubManager() {
         </div>
       ) : (
         <div className="animate-in fade-in duration-500">
-          <div className="flex justify-between items-center mb-8">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
                 <h2 className="text-3xl font-serif text-slate-800">Publications</h2>
                 <p className="text-slate-500 text-sm mt-1">Manage your academic and policy papers</p>
             </div>
-            <button onClick={handleCreate} className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-md hover:bg-slate-800 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5 font-medium">
+            <button onClick={handleCreate} className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-md hover:bg-slate-800 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5 font-medium w-full md:w-auto justify-center">
               <Plus size={18} /> New Publication
             </button>
           </div>
           <div className="bg-white rounded-xl shadow-sm border border-slate-200/60 overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
+              <table className="w-full text-left border-collapse min-w-[600px]">
                 <thead className="bg-slate-50/50 border-b border-slate-100 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   <tr>
-                    <th className="p-5 min-w-[250px]">Title</th>
-                    <th className="p-5">Status</th>
-                    <th className="p-5">Publisher</th>
-                    <th className="p-5">Year</th>
-                    <th className="p-5 text-right">Actions</th>
+                    <th className="p-3 md:p-5 min-w-[200px]">Title</th>
+                    <th className="p-3 md:p-5">Status</th>
+                    <th className="p-3 md:p-5 hidden sm:table-cell">Publisher</th>
+                    <th className="p-3 md:p-5 hidden sm:table-cell">Year</th>
+                    <th className="p-3 md:p-5 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-sm">
                   {paginatedPubs.map(pub => (
                     <tr key={pub.id} className="hover:bg-slate-50/80 transition-colors group">
-                      <td className="p-5 font-medium text-slate-800">
+                      <td className="p-3 md:p-5 font-medium text-slate-800">
                         {pub.title}
                         {pub.featured && <span className="ml-2 text-[10px] bg-yellow-50 text-yellow-700 border border-yellow-200 px-1.5 py-0.5 rounded uppercase tracking-wide font-bold">Featured</span>}
                          {pub.coAuthors && pub.coAuthors.length > 0 && <div className="text-xs text-slate-400 mt-1">w/ {pub.coAuthors.join(', ')}</div>}
                       </td>
-                      <td className="p-5"><StatusBadge published={pub.published} /></td>
-                      <td className="p-5 text-slate-500 text-sm">{pub.venue}</td>
-                      <td className="p-5 text-slate-500 text-sm font-mono">{pub.year}</td>
-                      <td className="p-5 text-right whitespace-nowrap">
-                         <div className="flex items-center justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                      <td className="p-3 md:p-5"><StatusBadge published={pub.published} /></td>
+                      <td className="p-3 md:p-5 text-slate-500 text-sm hidden sm:table-cell">{pub.venue}</td>
+                      <td className="p-3 md:p-5 text-slate-500 text-sm font-mono hidden sm:table-cell">{pub.year}</td>
+                      <td className="p-3 md:p-5 text-right whitespace-nowrap">
+                         <div className="flex items-center justify-end gap-1 opacity-100 md:opacity-60 md:group-hover:opacity-100 transition-opacity">
                             <button onClick={() => handleEdit(pub)} className="p-2 text-slate-400 hover:text-primary hover:bg-primary/5 rounded-full transition-colors" title="Edit">
                                 <Edit2 size={16} />
                             </button>
