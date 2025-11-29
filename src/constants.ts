@@ -87,7 +87,7 @@ export const BLOG_POSTS: BlogPost[] = [
   return dateB.getTime() - dateA.getTime();
 });
 
-export const PUBLICATIONS: Publication[] = [
+export const PUBLICATIONS: Publication[] = ([
   {
     id: "p3",
     title: "The Rome Statute’s Dilemma: Reconciling Official Capacity and State Sovereignty",
@@ -152,7 +152,7 @@ export const PUBLICATIONS: Publication[] = [
     link: "#",
     published: true
   }
-].sort((a, b) => parseInt(b.year) - parseInt(a.year));
+] as Publication[]).sort((a, b) => parseInt(b.year) - parseInt(a.year));
 
 export const EXPERTISE = [
   "International Financial Law",
