@@ -99,7 +99,7 @@ export default async function Home() {
       />
       
       {/* Hero Section */}
-      <Section className="max-w-5xl mx-auto px-6 pt-5 md:pt-6">
+      <Section className="max-w-5xl mx-auto px-6">
         <h1 className="font-serif text-5xl md:text-7xl text-primary leading-[1.1] font-normal mb-10 tracking-tight">
           Law, Policy, and <br className="hidden md:block" />
           <span className="italic text-slate-600">African Markets</span>.
