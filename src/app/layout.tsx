@@ -61,13 +61,9 @@ export const metadata: Metadata = {
   },
 
   icons: {
-    icon: [
-      { url: '/favicon.svg', type: 'image/svg+xml' },
-    ],
-    shortcut: ['/favicon.svg'],
-    apple: [
-      { url: '/favicon.svg' },
-    ],
+    icon: '/favicon.svg', // Simplified to just point to your SVG
+    shortcut: '/favicon.svg',
+    apple: '/favicon.svg',
   },
   // Verification for Google Search Console (Optional but recommended)
   verification: {
