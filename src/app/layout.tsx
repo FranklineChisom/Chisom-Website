@@ -60,11 +60,9 @@ export const metadata: Metadata = {
     },
   },
 
-  icons: {
-    icon: '/favicon.svg', // Simplified to just point to your SVG
-    shortcut: '/favicon.svg',
-    apple: '/favicon.svg',
-  },
+  // Explicitly removed 'icons' object to let Next.js auto-discover favicon.ico/favicon.svg
+  // from the app/ or public/ directory. This resolves conflicts with platform defaults.
+
   // Verification for Google Search Console (Optional but recommended)
   verification: {
     google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
