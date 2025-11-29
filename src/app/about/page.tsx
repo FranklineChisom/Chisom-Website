@@ -1,6 +1,5 @@
 import React from 'react';
 import Image from 'next/image';
-import Section from '@/components/Section';
 import { Download } from 'lucide-react';
 import { EXPERTISE } from '@/constants';
 import { supabase } from '@/lib/supabase';
@@ -30,7 +29,8 @@ export default async function About() {
 
   return (
     <div className="max-w-5xl mx-auto px-6 space-y-20">
-      <Section className="grid md:grid-cols-12 gap-12 items-start">
+      {/* Replaced Section with SEO-friendly div */}
+      <div className="grid md:grid-cols-12 gap-12 items-start animate-in fade-in slide-in-from-bottom-4 duration-700">
         {/* Image Column */}
         <div className="md:col-span-5 lg:col-span-4">
             <div className="aspect-[3/4] bg-slate-200 rounded-none overflow-hidden shadow-lg relative">
@@ -76,10 +76,13 @@ export default async function About() {
                 </a>
             </div>
         </div>
-      </Section>
+      </div>
 
-      {/* Expertise */}
-      <Section delay={200} className="grid md:grid-cols-2 gap-12 pt-12 border-t border-slate-100">
+      {/* Expertise - Replaced Section with SEO-friendly div with delay */}
+      <div 
+        className="grid md:grid-cols-2 gap-12 pt-12 border-t border-slate-100 animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-backwards"
+        style={{ animationDelay: '200ms' }}
+      >
         <div>
           <h3 className="font-serif text-xl text-primary mb-6">Areas of Interest</h3>
           <ul className="space-y-3">
@@ -113,7 +116,7 @@ export default async function About() {
             </li>
           </ul>
         </div>
-      </Section>
+      </div>
     </div>
   );
 }

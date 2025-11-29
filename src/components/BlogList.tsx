@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Check, AlertCircle, Loader2 } from 'lucide-react';
-import Section from '@/components/Section';
 import Pagination from '@/components/Pagination';
 import SearchBar from '@/components/SearchBar';
 import { BlogPost } from '@/types';
@@ -47,7 +46,8 @@ const BlogList: React.FC<BlogListProps> = ({ initialPosts }) => {
 
   return (
     <div className="max-w-4xl mx-auto px-6 space-y-20">
-      <Section>
+      {/* Intro - SEO Optimized */}
+      <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
         <h1 className="font-serif text-4xl md:text-5xl text-primary font-normal mb-8">Writings</h1>
         <p className="text-xl text-slate-600 font-light leading-relaxed max-w-2xl mb-8">
           Thoughts on law, policy, and the future of African markets.
@@ -58,9 +58,9 @@ const BlogList: React.FC<BlogListProps> = ({ initialPosts }) => {
           scope="blog"
           placeholder="Search articles..."
         />
-      </Section>
+      </div>
 
-      {/* Removed Section wrapper for immediate listing visibility */}
+      {/* Posts List - Already optimized (div wrapper) */}
       <div className="grid gap-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
         {currentPosts.length > 0 ? currentPosts.map((post) => (
           <article key={post.id} className="group flex flex-col md:grid md:grid-cols-4 gap-6 items-start">
@@ -93,7 +93,11 @@ const BlogList: React.FC<BlogListProps> = ({ initialPosts }) => {
         onPageChange={handlePageChange} 
       />
 
-      <Section delay={200} className="border-t border-slate-100 pt-12 mt-12">
+      {/* Subscribe Section - SEO Optimized */}
+      <div 
+        className="border-t border-slate-100 pt-12 mt-12 animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-backwards"
+        style={{ animationDelay: '200ms' }}
+      >
         <div className="bg-slate-50 p-8 flex flex-col md:flex-row justify-between items-center gap-6 rounded-sm">
             <div>
                 <h4 className="font-serif text-lg text-primary mb-2">Stay Updated</h4>
@@ -139,7 +143,7 @@ const BlogList: React.FC<BlogListProps> = ({ initialPosts }) => {
                 )}
             </div>
         </div>
-      </Section>
+      </div>
     </div>
   );
 };

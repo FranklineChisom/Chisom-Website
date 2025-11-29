@@ -34,7 +34,8 @@ async function getData() {
     .order('date', { ascending: false })
     .limit(3);
     
-  const recentPosts: BlogPost[] = dbPosts ? dbPosts.map((p: any) => ({
+  // Fix: Check for length > 0 to ensure fallback works when DB returns empty array []
+  const recentPosts: BlogPost[] = (dbPosts && dbPosts.length > 0) ? dbPosts.map((p: any) => ({
     id: p.id,
     slug: p.slug,
     title: p.title,
@@ -54,7 +55,8 @@ async function getData() {
     .order('date', { ascending: false })
     .limit(2);
 
-  const recentNewsletters: Newsletter[] = dbNewsletters ? dbNewsletters.map((n: any) => ({
+  // Fix: Check for length > 0 to ensure fallback works when DB returns empty array []
+  const recentNewsletters: Newsletter[] = (dbNewsletters && dbNewsletters.length > 0) ? dbNewsletters.map((n: any) => ({
     id: n.id,
     slug: n.slug,
     title: n.title,

@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import { ExternalLink } from 'lucide-react';
 import Pagination from '@/components/Pagination';
 import SearchBar from '@/components/SearchBar';
-import Section from '@/components/Section';
 import { Publication } from '@/types';
 
 interface ResearchListProps {
@@ -37,8 +36,8 @@ const ResearchList: React.FC<ResearchListProps> = ({ initialPublications }) => {
   return (
     <div className="max-w-4xl mx-auto px-6 space-y-24">
       
-      {/* Intro */}
-      <Section>
+      {/* Intro - SEO Optimized */}
+      <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
         <h1 className="font-serif text-4xl md:text-5xl text-primary mb-8">Research & Publications</h1>
         <p className="text-xl text-slate-600 font-light leading-relaxed max-w-3xl mb-8">
           My research philosophy centers on adaptive jurisprudence, examining how legal frameworks must evolve to meet the fluid demands of digital innovation, economic integration, and social justice without compromising the stability of the rule of law.
@@ -50,10 +49,13 @@ const ResearchList: React.FC<ResearchListProps> = ({ initialPublications }) => {
           scope="publication"
           placeholder="Search publications..."
         />
-      </Section>
+      </div>
 
-      {/* Featured Works */}
-      <Section delay={100}>
+      {/* Featured Works - SEO Optimized */}
+      <div 
+        className="animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-backwards"
+        style={{ animationDelay: '100ms' }}
+      >
         <h2 className="text-xs font-bold tracking-widest text-slate-400 uppercase mb-8">Featured Works</h2>
         <div className="grid gap-8">
           {featuredPubs.length > 0 ? featuredPubs.map((pub) => (
@@ -83,10 +85,14 @@ const ResearchList: React.FC<ResearchListProps> = ({ initialPublications }) => {
             <p className="text-slate-500 italic">No featured publications yet.</p>
           )}
         </div>
-      </Section>
+      </div>
 
-      {/* List of Publications */}
-      <Section delay={200} id="publication-list">
+      {/* List of Publications - SEO Optimized */}
+      <div 
+        id="publication-list"
+        className="animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-backwards"
+        style={{ animationDelay: '200ms' }}
+      >
         <h2 className="text-xs font-bold tracking-widest text-slate-400 uppercase mb-8">Selected Publications</h2>
         <div className="space-y-8">
           {currentOtherPubs.length > 0 ? currentOtherPubs.map((pub) => (
@@ -118,10 +124,13 @@ const ResearchList: React.FC<ResearchListProps> = ({ initialPublications }) => {
           totalPages={totalPages} 
           onPageChange={handlePageChange} 
         />
-      </Section>
+      </div>
 
-      {/* Interests */}
-      <Section delay={300} className="bg-primary text-white p-10 rounded-none">
+      {/* Interests - SEO Optimized */}
+      <div 
+        className="bg-primary text-white p-10 rounded-none animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-backwards"
+        style={{ animationDelay: '300ms' }}
+      >
         <h3 className="font-serif text-2xl mb-4">Research Interests</h3>
         <p className="text-slate-300 font-light leading-relaxed mb-4">
           I am actively exploring research collaborations and academic dialogue in the areas of:
@@ -140,7 +149,7 @@ const ResearchList: React.FC<ResearchListProps> = ({ initialPublications }) => {
                 <span className="text-white">Dispute Resolution: Examining the evolution of international arbitration standards and comparative procedural mechanisms.</span>
             </li>
         </ul>
-      </Section>
+      </div>
     </div>
   );
 };
