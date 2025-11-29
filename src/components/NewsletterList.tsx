@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Mail } from 'lucide-react';
-import Section from '@/components/Section';
 import Pagination from '@/components/Pagination';
 import SearchBar from '@/components/SearchBar';
 import { Newsletter } from '@/types';
@@ -31,7 +30,8 @@ const NewsletterList: React.FC<NewsletterListProps> = ({ initialNewsletters }) =
 
   return (
     <div className="max-w-4xl mx-auto px-6 space-y-20">
-      <Section>
+      {/* Replaced Section with SEO-friendly div */}
+      <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
         <div className="flex items-center gap-3 text-accent mb-4">
           <Mail size={24} />
           <span className="text-sm font-bold tracking-widest uppercase">Archive</span>
@@ -47,7 +47,7 @@ const NewsletterList: React.FC<NewsletterListProps> = ({ initialNewsletters }) =
           scope="newsletter"
           placeholder="Search newsletters..."
         />
-      </Section>
+      </div>
 
       {/* Removed Section wrapper for immediate visibility */}
       <div className="grid gap-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
