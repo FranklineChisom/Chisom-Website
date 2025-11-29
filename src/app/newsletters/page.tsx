@@ -1,6 +1,5 @@
 import React from 'react';
 import { supabase } from '@/lib/supabase';
-import { NEWSLETTERS } from '@/constants';
 import { Newsletter } from '@/types';
 import type { Metadata } from 'next';
 import NewsletterList from '@/components/NewsletterList';
@@ -23,7 +22,7 @@ async function getNewsletters() {
     .order('date', { ascending: false });
 
   if (!data || data.length === 0) {
-    return NEWSLETTERS;
+    return []; // No fallback, return empty array
   }
 
   return data.map((n: any) => ({

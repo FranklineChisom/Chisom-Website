@@ -4,7 +4,6 @@ import Image from 'next/image';
 import { ArrowLeft, Calendar, Mail } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { supabase } from '@/lib/supabase';
-import { NEWSLETTERS } from '@/constants';
 import { Newsletter } from '@/types';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
@@ -55,8 +54,8 @@ async function getNewsletter(slug: string): Promise<Newsletter | null> {
     };
   }
 
-  const constantItem = NEWSLETTERS.find(n => n.slug === slug || n.id === slug);
-  return constantItem || null;
+  // No fallback to constants
+  return null;
 }
 
 export async function generateMetadata(props: Props): Promise<Metadata> {

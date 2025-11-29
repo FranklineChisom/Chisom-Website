@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { BlogPost, Publication, SiteConfig, Newsletter, ContactMessage, Subscriber } from '../types';
-import { SITE_CONFIG as DEFAULT_CONFIG, BLOG_POSTS as DEFAULT_POSTS, PUBLICATIONS as DEFAULT_PUBS, NEWSLETTERS as DEFAULT_NEWSLETTERS } from '../constants';
+import { SITE_CONFIG as DEFAULT_CONFIG } from '../constants';
 import { supabase, handleSupabaseError } from '../lib/supabase';
 
 interface DataContextType {
@@ -132,10 +132,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const loadBlogPosts = async () => {
     const { data, error } = await supabase.from('blog_posts').select('*');
     
-    // Fallback to default constants if error OR if database is empty
-    if (error || !data || data.length === 0) {
+    if (error || !data) {
       if (error) handleSupabaseError(error, 'Error loading blog posts');
-      setBlogPosts(DEFAULT_POSTS);
+      setBlogPosts([]); // No fallback
       return;
     }
 
@@ -158,10 +157,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const loadPublications = async () => {
     const { data, error } = await supabase.from('publications').select('*');
     
-    // Fallback to default constants if error OR if database is empty
-    if (error || !data || data.length === 0) {
+    if (error || !data) {
       if (error) handleSupabaseError(error, 'Error loading publications');
-      setPublications(DEFAULT_PUBS);
+      setPublications([]); // No fallback
       return;
     }
 
@@ -184,10 +182,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const loadNewsletters = async () => {
     const { data, error } = await supabase.from('newsletters').select('*');
     
-    // Fallback to default constants if error OR if database is empty
-    if (error || !data || data.length === 0) {
+    if (error || !data) {
       if (error) handleSupabaseError(error, 'Error loading newsletters');
-      setNewsletters(DEFAULT_NEWSLETTERS);
+      setNewsletters([]); // No fallback
       return;
     }
 
@@ -225,7 +222,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if(data) setSubscribers(data);
   };
 
-  // --- CRUD OPERATIONS (Keep existing logic) ---
+  // --- CRUD OPERATIONS ---
 
   const updateSiteConfig = async (config: SiteConfig): Promise<boolean> => {
     const { data: existing } = await supabase.from('site_config').select('id').single();
@@ -277,11 +274,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       published: post.published
     });
     if (error) return false;
-    
-    // If we were showing defaults because DB was empty, we should clear them before adding the new one
-    // But since we can't easily check 'wasDefault' here, simply spreading [post, ...blogPosts] 
-    // might mix default data with real data visually until refresh. 
-    // To keep it simple for immediate feedback:
     const newPosts = [post, ...blogPosts];
     newPosts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     setBlogPosts(newPosts);
@@ -408,7 +400,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const addMessage = async (msg: ContactMessage): Promise<boolean> => {
     const { error } = await supabase.from('messages').insert(msg);
     if (error) return false;
-    return true; // Public users can't see the message, so we don't update state here
+    return true;
   };
 
   const markMessageRead = async (id: string): Promise<boolean> => {
@@ -434,25 +426,18 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const addSubscriber = async (email: string): Promise<boolean> => {
     const normalizedEmail = email.trim().toLowerCase();
-    // For security, public users shouldn't be able to check duplicates via SELECT on subscribers table
-    // unless RLS allows it. We assume the INSERT will fail on Unique Constraint if duplicate.
     const { error } = await supabase.from('subscribers').insert({
       id: Date.now().toString(),
       email: normalizedEmail,
       date: new Date().toISOString()
     });
 
-    if (error) {
-       // Handle unique violation silently or return false
-       return false;
-    }
+    if (error) return false;
     return true;
   };
 
   const removeSubscriber = async (email: string): Promise<boolean> => {
     const normalizedEmail = email.trim().toLowerCase();
-    // If public user, we just try to delete. RLS might block this if not careful, 
-    // but usually unsubscription is public-facing.
     const { error } = await supabase.from('subscribers').delete().eq('email', normalizedEmail);
     if (error) return false;
     setSubscribers(subscribers.filter(s => s.email.toLowerCase() !== normalizedEmail));
@@ -479,7 +464,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     if (passwordMatch && emailMatch) {
       setIsAuthenticated(true);
-      // Set cookie for Middleware protection (expires in 7 days)
       document.cookie = `admin_session=true; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
       return true;
     }

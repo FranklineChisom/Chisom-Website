@@ -1,6 +1,5 @@
 import React from 'react';
 import { supabase } from '@/lib/supabase';
-import { BLOG_POSTS } from '@/constants';
 import { BlogPost } from '@/types';
 import BlogList from '@/components/BlogList';
 import type { Metadata } from 'next';
@@ -23,7 +22,7 @@ async function getBlogPosts() {
     .order('date', { ascending: false });
 
   if (!data || data.length === 0) {
-    return BLOG_POSTS;
+    return []; // No fallback, return empty array
   }
 
   return data.map((p: any) => ({

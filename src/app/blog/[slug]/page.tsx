@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { ArrowLeft, Clock, Calendar } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { supabase } from '@/lib/supabase';
-import { BLOG_POSTS } from '@/constants';
 import { BlogPost } from '@/types';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
@@ -57,8 +56,8 @@ async function getBlogPost(slug: string): Promise<BlogPost | null> {
     };
   }
 
-  const constantPost = BLOG_POSTS.find(p => p.slug === slug || p.id === slug);
-  return constantPost || null;
+  // No fallback to constants
+  return null;
 }
 
 export async function generateMetadata(props: Props): Promise<Metadata> {

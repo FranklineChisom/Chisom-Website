@@ -1,6 +1,5 @@
 import React from 'react';
 import { supabase } from '@/lib/supabase';
-import { PUBLICATIONS } from '@/constants';
 import { Publication } from '@/types';
 import type { Metadata } from 'next';
 import ResearchList from '@/components/ResearchList';
@@ -23,7 +22,7 @@ async function getPublications() {
     .eq('published', true);
 
   if (!data || data.length === 0) {
-    return PUBLICATIONS;
+    return []; // No fallback, return empty array
   }
 
   return data.map((pub: any) => ({

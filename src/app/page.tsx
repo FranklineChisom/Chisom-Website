@@ -4,7 +4,7 @@ import { ArrowRight, ChevronRight, Mail } from 'lucide-react';
 import Section from '@/components/Section';
 import { supabase } from '@/lib/supabase';
 import NewsletterForm from '@/components/NewsletterForm';
-import { SITE_CONFIG, BLOG_POSTS, NEWSLETTERS } from '@/constants';
+import { SITE_CONFIG } from '@/constants';
 import { BlogPost, Newsletter, SiteConfig } from '@/types';
 
 // Fetch data
@@ -34,8 +34,7 @@ async function getData() {
     .order('date', { ascending: false })
     .limit(3);
     
-  // Check for length > 0 to ensure fallback works when DB returns empty array []
-  const recentPosts: BlogPost[] = (dbPosts && dbPosts.length > 0) ? dbPosts.map((p: any) => ({
+  const recentPosts: BlogPost[] = dbPosts ? dbPosts.map((p: any) => ({
     id: p.id,
     slug: p.slug,
     title: p.title,
@@ -46,7 +45,7 @@ async function getData() {
     readTime: p.read_time,
     coverImage: p.cover_image,
     published: p.published
-  })) : BLOG_POSTS.slice(0, 3);
+  })) : []; // Empty array if no posts
 
   const { data: dbNewsletters } = await supabase
     .from('newsletters')
@@ -55,8 +54,7 @@ async function getData() {
     .order('date', { ascending: false })
     .limit(2);
 
-  // Check for length > 0 to ensure fallback works when DB returns empty array []
-  const recentNewsletters: Newsletter[] = (dbNewsletters && dbNewsletters.length > 0) ? dbNewsletters.map((n: any) => ({
+  const recentNewsletters: Newsletter[] = dbNewsletters ? dbNewsletters.map((n: any) => ({
     id: n.id,
     slug: n.slug,
     title: n.title,
@@ -65,7 +63,7 @@ async function getData() {
     content: n.content,
     coverImage: n.cover_image,
     published: n.published
-  })) : NEWSLETTERS.slice(0, 2);
+  })) : []; // Empty array if no newsletters
 
   return { siteConfig, recentPosts, recentNewsletters };
 }
@@ -148,37 +146,45 @@ export default async function Home() {
       <Section delay={300} className="max-w-4xl mx-auto px-6">
         <div className="flex justify-between items-end mb-12">
           <h2 className="font-serif text-3xl text-primary">From the Blog</h2>
-          <Link href="/blog" className="hidden md:inline-flex items-center text-sm text-slate-500 hover:text-primary transition-colors">
-            View all articles <ArrowRight size={16} className="ml-1" />
-          </Link>
+          {recentPosts.length > 0 && (
+            <Link href="/blog" className="hidden md:inline-flex items-center text-sm text-slate-500 hover:text-primary transition-colors">
+              View all articles <ArrowRight size={16} className="ml-1" />
+            </Link>
+          )}
         </div>
 
-        <div className="grid gap-12">
-          {recentPosts.map((post) => (
-            <article key={post.id} className="group">
-              <div className="flex flex-col md:flex-row md:items-baseline gap-2 md:gap-8">
-                <span className="text-sm text-slate-400 font-mono min-w-[120px]">{post.date}</span>
-                <div>
-                  <h3 className="text-xl font-medium text-slate-800 group-hover:text-primary transition-colors mb-2">
-                    <Link href={`/blog/${post.slug || post.id}`}>{post.title}</Link>
-                  </h3>
-                  <p className="text-slate-600 leading-relaxed max-w-2xl mb-2">
-                    {post.excerpt}
-                  </p>
-                  <Link href={`/blog/${post.slug || post.id}`} className="text-sm font-medium text-slate-400 group-hover:text-primary transition-colors inline-flex items-center">
-                    Read Article <ArrowRight size={14} className="ml-1" />
-                  </Link>
+        {recentPosts.length > 0 ? (
+          <div className="grid gap-12">
+            {recentPosts.map((post) => (
+              <article key={post.id} className="group">
+                <div className="flex flex-col md:flex-row md:items-baseline gap-2 md:gap-8">
+                  <span className="text-sm text-slate-400 font-mono min-w-[120px]">{post.date}</span>
+                  <div>
+                    <h3 className="text-xl font-medium text-slate-800 group-hover:text-primary transition-colors mb-2">
+                      <Link href={`/blog/${post.slug || post.id}`}>{post.title}</Link>
+                    </h3>
+                    <p className="text-slate-600 leading-relaxed max-w-2xl mb-2">
+                      {post.excerpt}
+                    </p>
+                    <Link href={`/blog/${post.slug || post.id}`} className="text-sm font-medium text-slate-400 group-hover:text-primary transition-colors inline-flex items-center">
+                      Read Article <ArrowRight size={14} className="ml-1" />
+                    </Link>
+                  </div>
                 </div>
-              </div>
-            </article>
-          ))}
-        </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <p className="text-slate-500 italic">No articles published yet.</p>
+        )}
         
-        <div className="mt-10 md:hidden">
-          <Link href="/blog" className="inline-flex items-center text-sm text-slate-500 hover:text-primary">
-            View all articles <ArrowRight size={16} className="ml-1" />
-          </Link>
-        </div>
+        {recentPosts.length > 0 && (
+          <div className="mt-10 md:hidden">
+            <Link href="/blog" className="inline-flex items-center text-sm text-slate-500 hover:text-primary">
+              View all articles <ArrowRight size={16} className="ml-1" />
+            </Link>
+          </div>
+        )}
       </Section>
 
       {/* Newsletter Section */}
