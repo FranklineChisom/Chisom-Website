@@ -20,8 +20,10 @@ export function middleware(request: NextRequest) {
   if (path === '/login') {
     if (adminSession) {
       const adminUrl = new URL('/admin', request.url);
-      // Use 302 to ensure browser clears cache/history state correctly for the redirect
-      return NextResponse.redirect(adminUrl, { status: 302 });
+      // Use 307 (Temporary Redirect) to preserve method, or 302.
+      // Next.js often handles 307 better for internal redirects to avoid caching the redirect itself aggressively.
+      // However, for a simple page redirect, standard behavior is fine.
+      return NextResponse.redirect(adminUrl);
     }
   }
 

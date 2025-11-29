@@ -12,10 +12,13 @@ export default function LoginPage() {
   const { login, isAuthenticated } = useData();
   const router = useRouter();
 
+  // Redirect if already authenticated (Client-side check)
   useEffect(() => {
     document.title = 'Admin Login | Frankline Chisom Ebere';
-    // Redirect immediately if already authenticated
-    if (isAuthenticated) {
+    
+    // Check local state or cookie presence
+    const hasSession = document.cookie.includes('admin_session=true');
+    if (isAuthenticated || hasSession) {
         router.replace('/admin');
     }
   }, [isAuthenticated, router]);
@@ -28,8 +31,10 @@ export default function LoginPage() {
     try {
       const success = await login(email, password);
       if (success) {
-        // Login successful, router.replace prevents going back to login page
-        router.replace('/admin');
+        // Force a hard navigation to ensure middleware and server state sync up
+        // Using window.location.href instead of router.push ensures a full page load
+        // which triggers middleware and clears client-side cache issues.
+        window.location.href = '/admin';
       } else {
         setError(true);
       }
