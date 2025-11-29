@@ -433,12 +433,22 @@ export default function InboxManager() {
         <div className="flex-1 overflow-y-auto">
             {listItems.length === 0 ? <div className="p-12 text-center text-slate-400 text-sm flex flex-col items-center"><Inbox size={32} className="mb-2 opacity-20" /><span>No messages</span></div> : listItems.map(item => (
                 <div key={item.id} onClick={() => handleSelectItem(item)} className={`group relative p-4 border-b border-slate-100 cursor-pointer transition-all hover:bg-slate-50 ${selectedId === item.id ? 'bg-blue-50/50 border-l-4 border-l-primary' : 'border-l-4 border-l-transparent'} ${!item.read ? 'bg-slate-50' : ''}`}>
-                    <div className="absolute left-2 top-4 opacity-70 group-hover:opacity-100 transition-opacity z-10 block md:hidden md:block" onClick={(e) => e.stopPropagation()}>
-                        <button onClick={(e) => toggleCheck(item.id, e)} className="text-slate-400 hover:text-primary p-2 md:p-0">
-                            {checkedIds.has(item.id) ? <CheckSquare size={16} className="text-primary" /> : <Square size={16} />}
+                    
+                    {/* Checkbox Overlay - Fixed visibility */}
+                    <div className="absolute left-3 top-4 z-20" onClick={(e) => e.stopPropagation()}>
+                        <button 
+                            onClick={(e) => toggleCheck(item.id, e)} 
+                            className={`p-1 rounded-md transition-colors ${
+                                checkedIds.has(item.id) 
+                                    ? 'text-primary bg-primary/10' 
+                                    : 'text-slate-300 hover:text-slate-500 hover:bg-slate-100'
+                            }`}
+                        >
+                            {checkedIds.has(item.id) ? <CheckSquare size={18} /> : <Square size={18} />}
                         </button>
                     </div>
-                    <div className="flex justify-between items-start mb-1 pl-4 group-hover:pl-6 transition-all duration-200">
+
+                    <div className="flex justify-between items-start mb-1 pl-8 group-hover:pl-8 transition-all duration-200">
                         <h4 className={`text-sm truncate pr-2 flex items-center gap-1.5 ${!item.read ? 'font-bold text-slate-900' : 'font-medium text-slate-700'}`}>
                             {item.replied && <CornerUpLeft size={12} className="text-green-500 flex-shrink-0" />}
                             {item.status === 'sent' && <CheckCircle2 size={12} className="text-green-500 flex-shrink-0" />}
@@ -447,7 +457,7 @@ export default function InboxManager() {
                         </h4>
                         <span className="text-[10px] text-slate-400 whitespace-nowrap">{item.date}</span>
                     </div>
-                    <p className={`text-xs truncate pl-4 group-hover:pl-6 transition-all duration-200 ${!item.read ? 'text-slate-800 font-medium' : 'text-slate-500'}`}>{item.subtitle}</p>
+                    <p className={`text-xs truncate pl-8 group-hover:pl-8 transition-all duration-200 ${!item.read ? 'text-slate-800 font-medium' : 'text-slate-500'}`}>{item.subtitle}</p>
                 </div>
             ))}
         </div>
