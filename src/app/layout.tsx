@@ -1,17 +1,15 @@
 import type { Metadata, Viewport } from "next"; 
-import { GoogleAnalytics } from '@next/third-parties/google'; // Import GA Component
+import { GoogleAnalytics } from '@next/third-parties/google'; 
 import "./globals.css";
 import { Providers } from "./providers";
 import ClientLayout from "@/components/ClientLayout";
 
-// 1. Separate Viewport export (Next.js 14+)
 export const viewport: Viewport = {
   themeColor: '#0f2f38',
   width: 'device-width',
   initialScale: 1,
 };
 
-// 2. Comprehensive Global Metadata
 export const metadata: Metadata = {
   metadataBase: new URL('https://franklinechisom.com'),
   title: {
@@ -23,7 +21,6 @@ export const metadata: Metadata = {
   authors: [{ name: "Frankline Chisom Ebere" }],
   creator: "Frankline Chisom Ebere",
   
-  // OpenGraph
   openGraph: {
     siteName: 'Frankline Chisom Ebere',
     locale: 'en_US',
@@ -39,7 +36,6 @@ export const metadata: Metadata = {
     ],
   },
 
-  // Twitter
   twitter: {
     card: 'summary_large_image',
     title: 'Frankline Chisom Ebere',
@@ -47,7 +43,6 @@ export const metadata: Metadata = {
     images: ['/images/og-default.jpg'],
   },
 
-  // Robots
   robots: {
     index: true,
     follow: true,
@@ -60,10 +55,13 @@ export const metadata: Metadata = {
     },
   },
 
-  // Explicitly removed 'icons' object to let Next.js auto-discover favicon.ico/favicon.svg
-  // from the app/ or public/ directory. This resolves conflicts with platform defaults.
+  // Explicitly pointing to the public/favicon.svg
+  icons: {
+    icon: '/favicon.svg',
+    shortcut: '/favicon.svg',
+    apple: '/favicon.svg', 
+  },
 
-  // Verification for Google Search Console (Optional but recommended)
   verification: {
     google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
   }
@@ -88,7 +86,6 @@ export default function RootLayout({
           </ClientLayout>
         </Providers>
       </body>
-      {/* Analytics script injected here - only if ID exists */}
       {process.env.NEXT_PUBLIC_GA_ID && (
         <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
       )}
