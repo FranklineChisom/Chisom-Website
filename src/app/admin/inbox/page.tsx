@@ -347,7 +347,7 @@ export default function InboxManager() {
                 <>
                    <div className="flex gap-2">
                     <button 
-                        onClick={() => confirmDelete(viewModal.msg.id)}
+                        onClick={() => confirmDelete(viewModal.msg?.id || '')}
                         className="text-red-500 hover:text-red-700 text-sm px-3 py-1.5 flex items-center gap-1.5 hover:bg-red-50 rounded-md transition-colors font-medium"
                     >
                         <Trash2 size={14} /> Delete
