@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { ArrowRight, Mail } from 'lucide-react';
+import { ArrowRight, ChevronRight, Mail } from 'lucide-react';
 import Section from '@/components/Section';
 import { supabase } from '@/lib/supabase';
 import NewsletterForm from '@/components/NewsletterForm';
