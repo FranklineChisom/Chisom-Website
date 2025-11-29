@@ -22,7 +22,7 @@ I am exploring how a unified legal framework can unlock the estimated **$2 trill
 - Islamic Finance in secular jurisdictions
 - Enforcement of foreign arbitral awards in West Africa`,
   aboutImage: "https://franklinechisom.com/images/Chisom.jpg",
-  email: "franklinechisom.ebere@gmail.com",
+  email: "contact@franklinechisom.com",
   location: "Abuja, Nigeria",
   social: {
     linkedin: "https://linkedin.com/in/franklinechisomebere",

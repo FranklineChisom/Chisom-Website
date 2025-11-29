@@ -1,370 +1,407 @@
 'use client';
 
-import React, { useState } from 'react';
-import { MailOpen, Mail, Trash2, CornerUpLeft, Clock, User, Send, Loader2, ChevronLeft, ChevronRight, X } from 'lucide-react';
-import { ContactMessage } from '@/types';
+import React, { useState, useEffect } from 'react';
+import { 
+  Mail, Inbox, Send, FileText, Trash2, Edit3, Search, 
+  ChevronLeft, ChevronRight, RefreshCw, MoreHorizontal, 
+  CornerUpLeft, Check, X, Loader2, User, Paperclip
+} from 'lucide-react';
+import { ContactMessage, Draft, ResendEmail } from '@/types';
 import { useData } from '@/contexts/DataContext';
 import { useToast } from '@/contexts/ToastContext';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import Modal from '@/components/Modal';
 
-const AdminPagination: React.FC<{ 
-    total: number, 
-    limit: number, 
-    page: number, 
-    setPage: (p: number) => void 
-}> = ({ total, limit, page, setPage }) => {
-    const totalPages = Math.ceil(total / limit);
-    if (totalPages <= 1) return null;
+// --- Types ---
+type Folder = 'inbox' | 'sent' | 'drafts';
 
-    return (
-        <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100 bg-slate-50/30">
-            <span className="text-xs text-slate-500">Showing page {page} of {totalPages}</span>
-            <div className="flex gap-2">
-                <button 
-                    onClick={() => setPage(page - 1)} 
-                    disabled={page === 1}
-                    className={`p-1.5 rounded-md border transition-all ${
-                        page === 1
-                            ? 'border-slate-100 text-slate-300 cursor-not-allowed'
-                            : 'border-slate-200 text-slate-600 hover:border-primary hover:text-primary bg-white shadow-sm'
-                    }`}
-                >
-                    <ChevronLeft size={16} />
-                </button>
-                <button 
-                    onClick={() => setPage(page + 1)} 
-                    disabled={page === totalPages}
-                    className={`p-1.5 rounded-md border transition-all ${
-                        page === totalPages
-                            ? 'border-slate-100 text-slate-300 cursor-not-allowed'
-                            : 'border-slate-200 text-slate-600 hover:border-primary hover:text-primary bg-white shadow-sm'
-                    }`}
-                >
-                    <ChevronRight size={16} />
-                </button>
-            </div>
-        </div>
-    );
-};
-
+// --- Main Component ---
 export default function InboxManager() {
-  usePageTitle('Inbox - Admin');
-  const { messages, markMessageRead, markMessageUnread, deleteMessage } = useData();
+  usePageTitle('Mail - Admin');
+  const { 
+    messages, sentEmails, drafts, 
+    markMessageRead, markMessageReplied, deleteMessage, 
+    saveDraft, deleteDraft, refreshSentEmails 
+  } = useData();
   const { showToast } = useToast();
-  const [page, setPage] = useState(1);
-  const ITEMS_PER_PAGE = 10;
 
-  // Modal State
-  const [viewModal, setViewModal] = useState<{ isOpen: boolean, msg: ContactMessage | null }>({ isOpen: false, msg: null });
-  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean, id: string | null }>({ isOpen: false, id: null });
-  const [isReplyMode, setIsReplyMode] = useState(false);
-  
-  // Reply Form State
-  const [replyTo, setReplyTo] = useState('');
-  const [replySubject, setReplySubject] = useState('');
-  const [replyBody, setReplyBody] = useState('');
+  // State
+  const [activeFolder, setActiveFolder] = useState<Folder>('inbox');
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [isComposing, setIsComposing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Compose State
+  const [composeData, setComposeData] = useState<{ id?: string, to: string, subject: string, body: string }>({
+    to: '', subject: '', body: ''
+  });
   const [isSending, setIsSending] = useState(false);
 
-  const paginatedMessages = messages.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
+  // --- Handlers ---
 
-  const handleOpenMessage = (msg: ContactMessage) => {
-    setViewModal({ isOpen: true, msg });
-    setIsReplyMode(false);
-    if (!msg.read) {
-      markMessageRead(msg.id);
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refreshSentEmails();
+    // Assuming other data live-updates via Context/Supabase
+    setTimeout(() => setIsRefreshing(false), 800);
+  };
+
+  const handleCompose = (defaults?: Partial<typeof composeData>) => {
+    setComposeData({ to: '', subject: '', body: '', ...defaults });
+    setIsComposing(true);
+    setSelectedId(null);
+  };
+
+  const handleSelectMessage = (id: string, msg?: ContactMessage) => {
+    setSelectedId(id);
+    setIsComposing(false);
+    if (activeFolder === 'inbox' && msg && !msg.read) {
+        markMessageRead(id);
     }
-  };
-
-  const handleCloseViewModal = () => {
-    setViewModal({ isOpen: false, msg: null });
-    setIsReplyMode(false);
-  };
-
-  const handleToggleReadStatus = async (msg: ContactMessage, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (msg.read) {
-        await markMessageUnread(msg.id);
-        showToast('Marked as unread', 'info');
-    } else {
-        await markMessageRead(msg.id);
-        showToast('Marked as read', 'success');
-    }
-  };
-
-  const initReply = () => {
-    if (!viewModal.msg) return;
-    setReplyTo(viewModal.msg.email);
-    setReplySubject(`Re: ${viewModal.msg.subject}`);
-    setReplyBody(`\n\n\nBest regards,\nFrankline Chisom Ebere`);
-    setIsReplyMode(true);
-  };
-
-  const confirmDelete = (id: string, e?: React.MouseEvent) => {
-      e?.stopPropagation();
-      setDeleteModal({ isOpen: true, id });
-  }
-
-  const handleDelete = async () => {
-      if (deleteModal.id) {
-        const success = await deleteMessage(deleteModal.id);
-        setDeleteModal({ isOpen: false, id: null });
-        if (success) {
-            showToast('Message deleted', 'success');
-            if (viewModal.msg?.id === deleteModal.id) handleCloseViewModal();
-        } else {
-            showToast('Failed to delete message', 'error');
+    // If selecting a draft, open compose mode
+    if (activeFolder === 'drafts') {
+        const draft = drafts.find(d => d.id === id);
+        if (draft) {
+            handleCompose({ id: draft.id, to: draft.recipient, subject: draft.subject, body: draft.message });
         }
-      }
+    }
   };
 
-  const handleSendReply = async () => {
-    if (!viewModal.msg) return;
-    if (!replyBody.trim() || !replyTo.trim() || !replySubject.trim()) {
-      showToast('All fields are required', 'error');
-      return;
+  const handleSend = async () => {
+    if (!composeData.to || !composeData.subject || !composeData.body) {
+        showToast('Please fill all fields', 'error');
+        return;
     }
-
     setIsSending(true);
+    
     try {
-      const response = await fetch('/api/send-reply', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          to: replyTo,
-          subject: replySubject,
-          message: replyBody,
-          originalMessage: {
-            date: viewModal.msg.date,
-            name: viewModal.msg.name,
-            message: viewModal.msg.message,
-            email: viewModal.msg.email
-          }
-        }),
-      });
-
-      const result = await response.json();
-
-      if (response.ok && result.success) {
-        showToast('Reply sent successfully!', 'success');
-        handleCloseViewModal();
-      } else {
-        throw new Error(result.error || 'Failed to send');
-      }
-    } catch (error) {
-      console.error('Reply Error:', error);
-      showToast('Failed to send reply.', 'error');
+        const res = await fetch('/api/resend', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                to: composeData.to,
+                subject: composeData.subject,
+                html: composeData.body.replace(/\n/g, '<br/>'),
+                text: composeData.body
+            })
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+            showToast('Email sent successfully', 'success');
+            setIsComposing(false);
+            if (composeData.id) await deleteDraft(composeData.id); // Delete draft after sending
+            await refreshSentEmails(); // Refresh sent folder
+        } else {
+            throw new Error(data.error || 'Failed to send');
+        }
+    } catch (e: any) {
+        showToast(e.message, 'error');
     } finally {
-      setIsSending(false);
+        setIsSending(false);
     }
   };
+
+  const handleSaveDraft = async () => {
+      // Use existing ID or create new one
+      const id = composeData.id || `draft_${Date.now()}`;
+      const draft: Draft = {
+          id,
+          recipient: composeData.to,
+          subject: composeData.subject,
+          message: composeData.body,
+          updated_at: new Date().toISOString()
+      };
+      
+      // Update state immediately to reflect ID if it was new
+      setComposeData(prev => ({ ...prev, id }));
+
+      const success = await saveDraft(draft);
+      if (success) {
+          showToast('Draft saved', 'success');
+      } else {
+          showToast('Failed to save draft', 'error');
+      }
+  };
+
+  const handleDeleteCurrent = async () => {
+      if (!selectedId) return;
+      
+      if (window.confirm('Are you sure you want to delete this?')) {
+          let success = false;
+          if (activeFolder === 'inbox') success = await deleteMessage(selectedId);
+          if (activeFolder === 'drafts') success = await deleteDraft(selectedId);
+          
+          if (success) {
+              showToast('Deleted', 'success');
+              setSelectedId(null);
+          }
+      }
+  };
+
+  // --- Filtering ---
+  
+  const getListItems = () => {
+      const lowerQ = searchQuery.toLowerCase();
+      switch (activeFolder) {
+          case 'inbox':
+              return messages.filter(m => 
+                  m.name.toLowerCase().includes(lowerQ) || 
+                  m.subject.toLowerCase().includes(lowerQ)
+              ).map(m => ({
+                  id: m.id,
+                  title: m.name,
+                  subtitle: m.subject,
+                  date: m.date,
+                  read: m.read,
+                  replied: m.replied,
+                  raw: m
+              }));
+          case 'sent':
+              return sentEmails.filter(e => 
+                  e.to.some(t => t.toLowerCase().includes(lowerQ)) || 
+                  e.subject.toLowerCase().includes(lowerQ)
+              ).map(e => ({
+                  id: e.id,
+                  title: `To: ${e.to.join(', ')}`,
+                  subtitle: e.subject,
+                  date: new Date(e.created_at).toLocaleDateString(),
+                  read: true,
+                  replied: false,
+                  raw: e
+              }));
+          case 'drafts':
+              return drafts.filter(d => 
+                  (d.recipient || '').toLowerCase().includes(lowerQ) || 
+                  (d.subject || '').toLowerCase().includes(lowerQ)
+              ).map(d => ({
+                  id: d.id,
+                  title: d.recipient || '(No Recipient)',
+                  subtitle: d.subject || '(No Subject)',
+                  date: new Date(d.updated_at).toLocaleDateString(),
+                  read: true,
+                  replied: false,
+                  raw: d
+              }));
+          default: return [];
+      }
+  };
+
+  const listItems = getListItems();
+  const selectedItem = listItems.find(i => i.id === selectedId);
 
   return (
-    <div>
-      <h2 className="text-3xl font-serif text-slate-800 mb-8">Inbox</h2>
-
-      {/* Messages Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200/60 overflow-hidden animate-in fade-in duration-500">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left table-fixed border-collapse">
-            <thead className="bg-slate-50/50 border-b border-slate-100 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              <tr>
-                <th className="p-5 w-14 text-center"><MailOpen size={16} /></th>
-                <th className="p-5 w-1/4">Sender</th>
-                <th className="p-5 w-1/3">Subject</th>
-                <th className="p-5 w-32">Date</th>
-                <th className="p-5 w-32 text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 text-sm">
-              {paginatedMessages.map(msg => (
-                  <tr 
-                    key={msg.id} 
-                    onClick={() => handleOpenMessage(msg)}
-                    className={`group cursor-pointer transition-all hover:bg-slate-50/80 ${msg.read ? 'text-slate-600' : 'bg-blue-50/30 text-slate-900 font-medium'}`}
-                  >
-                    <td className="p-5 text-center">
-                      {!msg.read ? <div className="w-2 h-2 rounded-full bg-primary mx-auto shadow-sm" /> : null}
-                    </td>
-                    <td className="p-5 truncate">
-                      <div className="font-medium">{msg.name}</div>
-                      <div className="text-xs text-slate-400 mt-0.5 truncate">{msg.email}</div>
-                    </td>
-                    <td className="p-5 truncate">
-                      <span className={msg.read ? 'font-normal' : 'font-semibold'}>{msg.subject}</span>
-                      <span className="text-slate-400 font-normal text-xs ml-2 block truncate mt-1 opacity-80">{msg.message.substring(0, 40)}...</span>
-                    </td>
-                    <td className="p-5 text-slate-500 font-mono text-xs">{msg.date}</td>
-                    <td className="p-5 text-right">
-                        <div className="flex items-center justify-end gap-1">
-                            <button
-                                onClick={(e) => handleToggleReadStatus(msg, e)}
-                                className={`p-2 rounded-full transition-colors ${msg.read ? 'text-slate-300 hover:text-primary hover:bg-primary/5' : 'text-primary bg-primary/5 hover:bg-primary/10'}`}
-                                title={msg.read ? "Mark as unread" : "Mark as read"}
-                            >
-                                {msg.read ? <Mail size={16} /> : <MailOpen size={16} />}
-                            </button>
-                            <button 
-                                onClick={(e) => confirmDelete(msg.id, e)}
-                                className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors"
-                                title="Delete"
-                            >
-                                <Trash2 size={16} />
-                            </button>
-                        </div>
-                    </td>
-                  </tr>
-                ))}
-                 {messages.length === 0 && (
-                    <tr>
-                        <td colSpan={5} className="p-12 text-center text-slate-400 italic">
-                            No messages found.
-                        </td>
-                    </tr>
-                )}
-            </tbody>
-          </table>
+    <div className="flex h-[calc(100vh-100px)] bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in duration-500">
+      
+      {/* Sidebar - Folders */}
+      <div className="w-64 bg-slate-50 border-r border-slate-200 flex flex-col hidden md:flex">
+        <div className="p-4">
+            <button 
+                onClick={() => handleCompose()}
+                className="w-full bg-primary text-white py-3 rounded-lg flex items-center justify-center gap-2 font-medium hover:bg-slate-800 transition-colors shadow-sm"
+            >
+                <Edit3 size={18} /> Compose
+            </button>
         </div>
-        <AdminPagination total={messages.length} limit={ITEMS_PER_PAGE} page={page} setPage={setPage} />
+        <nav className="flex-1 px-3 space-y-1">
+            <button 
+                onClick={() => { setActiveFolder('inbox'); setSelectedId(null); setIsComposing(false); }}
+                className={`w-full flex items-center justify-between px-4 py-2.5 rounded-md text-sm font-medium transition-colors ${activeFolder === 'inbox' ? 'bg-white text-primary shadow-sm ring-1 ring-slate-100' : 'text-slate-600 hover:bg-slate-200/50'}`}
+            >
+                <div className="flex items-center gap-3"><Inbox size={18} /> Inbox</div>
+                {messages.filter(m => !m.read).length > 0 && (
+                    <span className="bg-primary text-white text-[10px] font-bold py-0.5 px-2 rounded-full">{messages.filter(m => !m.read).length}</span>
+                )}
+            </button>
+            <button 
+                onClick={() => { setActiveFolder('sent'); setSelectedId(null); setIsComposing(false); }}
+                className={`w-full flex items-center justify-between px-4 py-2.5 rounded-md text-sm font-medium transition-colors ${activeFolder === 'sent' ? 'bg-white text-primary shadow-sm ring-1 ring-slate-100' : 'text-slate-600 hover:bg-slate-200/50'}`}
+            >
+                <div className="flex items-center gap-3"><Send size={18} /> Sent</div>
+            </button>
+            <button 
+                onClick={() => { setActiveFolder('drafts'); setSelectedId(null); setIsComposing(false); }}
+                className={`w-full flex items-center justify-between px-4 py-2.5 rounded-md text-sm font-medium transition-colors ${activeFolder === 'drafts' ? 'bg-white text-primary shadow-sm ring-1 ring-slate-100' : 'text-slate-600 hover:bg-slate-200/50'}`}
+            >
+                <div className="flex items-center gap-3"><FileText size={18} /> Drafts</div>
+                {drafts.length > 0 && <span className="text-slate-400 font-normal text-xs">{drafts.length}</span>}
+            </button>
+        </nav>
       </div>
 
-      {/* Delete Confirmation Modal */}
-      <Modal
-        isOpen={deleteModal.isOpen}
-        onClose={() => setDeleteModal({ isOpen: false, id: null })}
-        title="Delete Message?"
-        type="danger"
-        actions={
-            <>
-                <button onClick={() => setDeleteModal({ isOpen: false, id: null })} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-md text-sm font-medium transition-colors">Cancel</button>
-                <button onClick={handleDelete} className="px-4 py-2 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700 transition-colors shadow-sm">Delete Permanently</button>
-            </>
-        }
-      >
-        <p>Are you sure you want to delete this message? This action cannot be undone.</p>
-      </Modal>
-
-      {/* Message View/Reply Modal - Using custom content inside generic Modal wrapper logic or sticking to the custom overlay for complex layout? 
-          Let's use a custom full-screen-ish overlay for the message view as it's complex, but styled consistently.
-      */}
-      {viewModal.isOpen && viewModal.msg && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 transition-opacity duration-300 animate-in fade-in">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={handleCloseViewModal}></div>
-          <div className="bg-white w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] z-10 transform transition-all scale-100">
-            
-            {/* Header */}
-            <div className="p-6 border-b border-slate-100 flex justify-between items-start bg-slate-50/50">
-              <div className="flex-1 pr-4">
-                {isReplyMode ? (
-                  <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                    <CornerUpLeft size={18} className="text-primary"/> Reply to Message
-                  </h3>
-                ) : (
-                  <>
-                    <h3 className="text-xl font-serif text-slate-800 mb-1 leading-tight">{viewModal.msg.subject}</h3>
-                    <div className="flex items-center gap-3 mt-2">
-                        <div className="flex items-center gap-2 text-sm text-slate-600 bg-white px-2 py-1 rounded-md border border-slate-100 shadow-sm">
-                            <User size={14} className="text-primary" /> 
-                            <span className="font-medium">{viewModal.msg.name}</span> 
-                            <span className="text-slate-400 mx-1">|</span>
-                            <span className="text-slate-500">{viewModal.msg.email}</span>
+      {/* Message List */}
+      <div className="w-80 border-r border-slate-200 flex flex-col bg-white">
+        <div className="p-4 border-b border-slate-100 flex gap-2">
+            <div className="relative flex-1">
+                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input 
+                    type="text" 
+                    placeholder="Search..." 
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm focus:outline-none focus:border-primary transition-all"
+                />
+            </div>
+            <button onClick={handleRefresh} className={`p-2 text-slate-500 hover:text-primary hover:bg-slate-50 rounded-md transition-colors ${isRefreshing ? 'animate-spin' : ''}`}>
+                <RefreshCw size={18} />
+            </button>
+        </div>
+        <div className="flex-1 overflow-y-auto">
+            {listItems.length === 0 ? (
+                <div className="p-12 text-center text-slate-400 text-sm flex flex-col items-center">
+                    <Inbox size={32} className="mb-2 opacity-20" />
+                    <span>No messages</span>
+                </div>
+            ) : (
+                listItems.map(item => (
+                    <div 
+                        key={item.id}
+                        onClick={() => handleSelectMessage(item.id, activeFolder === 'inbox' ? item.raw as ContactMessage : undefined)}
+                        className={`p-4 border-b border-slate-100 cursor-pointer transition-all hover:bg-slate-50 ${selectedId === item.id ? 'bg-blue-50/50 border-l-4 border-l-primary' : 'border-l-4 border-l-transparent'} ${!item.read ? 'bg-slate-50' : ''}`}
+                    >
+                        <div className="flex justify-between items-start mb-1">
+                            <h4 className={`text-sm truncate pr-2 flex items-center gap-1.5 ${!item.read ? 'font-bold text-slate-900' : 'font-medium text-slate-700'}`}>
+                                {item.replied && <CornerUpLeft size={12} className="text-green-500 flex-shrink-0" />}
+                                {item.title}
+                            </h4>
+                            <span className="text-[10px] text-slate-400 whitespace-nowrap">{item.date}</span>
                         </div>
-                        <div className="flex items-center gap-2 text-xs text-slate-400">
-                            <Clock size={12} /> {viewModal.msg.date}
+                        <p className={`text-xs truncate ${!item.read ? 'text-slate-800 font-medium' : 'text-slate-500'}`}>{item.subtitle}</p>
+                    </div>
+                ))
+            )}
+        </div>
+      </div>
+
+      {/* Reading Pane / Compose Pane */}
+      <div className="flex-1 flex flex-col bg-white min-w-0">
+        {isComposing ? (
+            // --- COMPOSE VIEW ---
+            <div className="flex flex-col h-full animate-in fade-in zoom-in-95 duration-200">
+                <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/30">
+                    <h3 className="font-serif text-lg text-slate-800">New Message</h3>
+                    <div className="flex gap-2">
+                        <button onClick={handleSaveDraft} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-md text-sm font-medium transition-colors">
+                            Save Draft
+                        </button>
+                        <button onClick={() => setIsComposing(false)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
+                            <X size={20} />
+                        </button>
+                    </div>
+                </div>
+                <div className="p-6 flex-1 flex flex-col gap-4 overflow-y-auto">
+                    <div className="flex items-center gap-4">
+                        <label className="w-16 text-sm font-medium text-slate-500">To:</label>
+                        <input 
+                            type="email" 
+                            value={composeData.to}
+                            onChange={e => setComposeData({...composeData, to: e.target.value})}
+                            className="flex-1 border-b border-slate-200 py-2 focus:border-primary focus:outline-none text-sm bg-transparent transition-colors"
+                            placeholder="recipient@example.com"
+                        />
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <label className="w-16 text-sm font-medium text-slate-500">Subject:</label>
+                        <input 
+                            type="text" 
+                            value={composeData.subject}
+                            onChange={e => setComposeData({...composeData, subject: e.target.value})}
+                            className="flex-1 border-b border-slate-200 py-2 focus:border-primary focus:outline-none text-sm font-medium bg-transparent transition-colors"
+                            placeholder="Subject line"
+                        />
+                    </div>
+                    <textarea 
+                        value={composeData.body}
+                        onChange={e => setComposeData({...composeData, body: e.target.value})}
+                        className="flex-1 resize-none mt-4 p-4 border border-slate-200 rounded-md focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none text-sm leading-relaxed transition-shadow"
+                        placeholder="Type your message here..."
+                    />
+                </div>
+                <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-between items-center">
+                    <div className="flex gap-2 text-slate-400">
+                        {/* Placeholder for future attachment features */}
+                        <button className="p-2 hover:bg-slate-200 rounded-full transition-colors" title="Attach File (Coming Soon)">
+                            <Paperclip size={18} />
+                        </button>
+                    </div>
+                    <button 
+                        onClick={handleSend}
+                        disabled={isSending}
+                        className="bg-primary text-white px-8 py-2.5 rounded-md font-medium hover:bg-slate-800 transition-all flex items-center gap-2 disabled:opacity-70 shadow-sm hover:shadow-md transform active:scale-95"
+                    >
+                        {isSending ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
+                        {isSending ? 'Sending...' : 'Send Message'}
+                    </button>
+                </div>
+            </div>
+        ) : selectedItem ? (
+            // --- READING VIEW ---
+            <div className="flex flex-col h-full animate-in fade-in duration-300">
+                {/* Header */}
+                <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-start bg-slate-50/30">
+                    <div>
+                        <h2 className="text-2xl font-serif text-slate-900 mb-4 leading-tight">{selectedItem.subtitle}</h2>
+                        <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 bg-gradient-to-br from-slate-100 to-slate-200 rounded-full flex items-center justify-center text-slate-500 border border-slate-200 shadow-sm">
+                                <User size={20} />
+                            </div>
+                            <div>
+                                <div className="font-bold text-slate-800 text-sm">
+                                    {selectedItem.title}
+                                    {activeFolder === 'inbox' && <span className="text-slate-400 font-normal ml-1">&lt;{(selectedItem.raw as ContactMessage).email}&gt;</span>}
+                                </div>
+                                <div className="text-xs text-slate-500 mt-0.5">
+                                    {activeFolder === 'sent' ? 'Sent on ' : 'Received on '}{selectedItem.date}
+                                </div>
+                            </div>
                         </div>
                     </div>
-                  </>
-                )}
-              </div>
-              <button 
-                onClick={handleCloseViewModal}
-                className="text-slate-400 hover:text-slate-600 p-2 hover:bg-slate-100 rounded-full transition-colors"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            {/* Content */}
-            <div className="flex-1 overflow-y-auto p-8">
-              {isReplyMode ? (
-                <div className="space-y-5">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">To</label>
-                    <input 
-                      type="email" 
-                      value={replyTo}
-                      onChange={(e) => setReplyTo(e.target.value)}
-                      className="w-full border border-slate-200 p-2.5 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none rounded-md bg-slate-50/50"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Subject</label>
-                    <input 
-                      type="text" 
-                      value={replySubject}
-                      onChange={(e) => setReplySubject(e.target.value)}
-                      className="w-full border border-slate-200 p-2.5 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none rounded-md bg-slate-50/50"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Message</label>
-                    <textarea 
-                      value={replyBody}
-                      onChange={(e) => setReplyBody(e.target.value)}
-                      rows={8}
-                      autoFocus
-                      className="w-full border border-slate-200 p-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none rounded-md bg-slate-50/50 resize-none"
-                    />
-                  </div>
+                    <div className="flex gap-2">
+                        {activeFolder === 'inbox' && (
+                            <button 
+                                onClick={() => handleCompose({ to: (selectedItem.raw as ContactMessage).email, subject: `Re: ${selectedItem.subtitle}` })}
+                                className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 hover:border-primary hover:text-primary text-slate-700 rounded-md text-sm font-medium transition-all shadow-sm"
+                            >
+                                <CornerUpLeft size={16} /> Reply
+                            </button>
+                        )}
+                        {activeFolder !== 'sent' && (
+                            <button 
+                                onClick={handleDeleteCurrent}
+                                className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                                title="Delete"
+                            >
+                                <Trash2 size={20} />
+                            </button>
+                        )}
+                    </div>
                 </div>
-              ) : (
-                <div className="prose prose-sm prose-slate max-w-none text-slate-600 leading-loose">
-                  <p className="whitespace-pre-wrap">{viewModal.msg.message}</p>
+                
+                {/* Body */}
+                <div className="flex-1 p-8 overflow-y-auto">
+                    <div className="prose prose-slate max-w-none text-sm leading-7 text-slate-700">
+                        {activeFolder === 'inbox' && (selectedItem.raw as ContactMessage).message.split('\n').map((line, i) => (
+                            <p key={i} className="mb-2">{line}</p>
+                        ))}
+                        
+                        {(activeFolder === 'sent' || activeFolder === 'drafts') && (
+                            <div className="whitespace-pre-wrap font-sans text-slate-700">
+                                {(activeFolder === 'drafts' ? (selectedItem.raw as Draft).message : (selectedItem.raw as ResendEmail).text || 'No text content available.')}
+                            </div>
+                        )}
+                    </div>
                 </div>
-              )}
             </div>
-
-            {/* Footer */}
-            <div className="p-4 border-t border-slate-100 bg-slate-50/50 flex justify-between items-center">
-              {isReplyMode ? (
-                <>
-                  <button 
-                    onClick={() => setIsReplyMode(false)}
-                    className="text-slate-500 text-sm hover:text-slate-700 px-4 py-2 font-medium"
-                  >
-                    Cancel Reply
-                  </button>
-                  <button 
-                    onClick={handleSendReply}
-                    disabled={isSending}
-                    className="bg-primary text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-slate-800 transition-all shadow-md hover:shadow-lg flex items-center gap-2 disabled:opacity-70"
-                  >
-                    {isSending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
-                    {isSending ? 'Sending...' : 'Send Reply'}
-                  </button>
-                </>
-              ) : (
-                <>
-                   <div className="flex gap-2">
-                    <button 
-                        onClick={() => confirmDelete(viewModal.msg?.id || '')}
-                        className="text-red-500 hover:text-red-700 text-sm px-3 py-1.5 flex items-center gap-1.5 hover:bg-red-50 rounded-md transition-colors font-medium"
-                    >
-                        <Trash2 size={14} /> Delete
-                    </button>
-                  </div>
-                  <button 
-                    onClick={initReply}
-                    className="bg-primary text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-slate-800 transition-all shadow-md hover:shadow-lg flex items-center gap-2"
-                  >
-                    <CornerUpLeft size={16} /> Reply
-                  </button>
-                </>
-              )}
+        ) : (
+            // --- EMPTY STATE ---
+            <div className="flex-1 flex flex-col items-center justify-center text-slate-300 bg-slate-50/30">
+                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+                    <Mail size={32} className="text-slate-400" />
+                </div>
+                <p className="text-sm font-medium">Select an item to read</p>
             </div>
-          </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

@@ -35,20 +35,6 @@ export interface Publication {
   published: boolean;
 }
 
-export interface ResearchInterest {
-  title: string;
-  description: string;
-}
-
-export interface SocialConfig {
-  linkedin: string;
-  twitter: string;
-  scholar: string;
-  ssrn?: string;
-  facebook?: string;
-  instagram?: string;
-}
-
 export interface SiteConfig {
   name: string;
   role: string;
@@ -62,7 +48,16 @@ export interface SiteConfig {
   email: string;
   location: string;
   social: SocialConfig;
-  analyticsUrl?: string; // NEW FIELD
+  analyticsUrl?: string;
+}
+
+export interface SocialConfig {
+  linkedin: string;
+  twitter: string;
+  scholar: string;
+  ssrn?: string;
+  facebook?: string;
+  instagram?: string;
 }
 
 export interface ContactMessage {
@@ -80,4 +75,24 @@ export interface Subscriber {
   id: string;
   email: string;
   date: string;
+}
+
+// --- NEW TYPES FOR EMAIL CLIENT ---
+
+export interface Draft {
+  id: string;
+  recipient: string;
+  subject: string;
+  message: string;
+  updated_at: string;
+}
+
+export interface ResendEmail {
+  id: string;
+  from: string;
+  to: string[];
+  subject: string;
+  html?: string;
+  text?: string;
+  created_at: string;
 }
