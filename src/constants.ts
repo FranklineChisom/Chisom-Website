@@ -22,7 +22,7 @@ I am exploring how a unified legal framework can unlock the estimated **$2 trill
 - Islamic Finance in secular jurisdictions
 - Enforcement of foreign arbitral awards in West Africa`,
   aboutImage: "https://franklinechisom.com/images/Chisom.jpg",
-  email: "franklinechisom.ebere@gmail.com",
+  email: "contact@franklinechisom.com",
   location: "Abuja, Nigeria",
   social: {
     linkedin: "https://linkedin.com/in/franklinechisomebere",
@@ -44,7 +44,7 @@ export const NEWSLETTERS: Newsletter[] = [
     content: "Welcome to the first edition of my newsletter, where I document my thoughts on law, policy, and the economic future of the continent.\n\nIn this issue, we are looking at the 'Spaghetti Bowl' effect of overlapping regional economic communities in Africa and how the new AfCFTA protocols intend to untangle them.\n\nThe promise of a single market is alluring, but the regulatory reality is complex...",
     published: true
   }
-];
+].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
 export const BLOG_POSTS: BlogPost[] = [
   {
@@ -59,17 +59,6 @@ export const BLOG_POSTS: BlogPost[] = [
     published: true
   },
   {
-    id: "9",
-    slug: "extension-time-challenge-arbitral-awards",
-    title: "Extension of Time to Challenge Arbitral Awards under the 1996 English Arbitration Act",
-    date: "November 9, 2023",
-    category: "Dispute Resolution",
-    readTime: "7 min read",
-    excerpt: "Examining the jurisprudence of extension of time to challenge arbitral awards, published in the Kluwer Arbitration Blog.",
-    content: "An analysis of recent case law regarding the strict timelines imposed by the 1996 Arbitration Act and the circumstances under which courts grant extensions...",
-    published: true
-  },
-  {
     id: "7",
     slug: "understanding-cookie-regulations",
     title: "Understanding Cookie Regulations for Compliant Web Sites",
@@ -79,8 +68,24 @@ export const BLOG_POSTS: BlogPost[] = [
     excerpt: "A guide to navigating digital privacy laws and cookie regulations for modern web development.",
     content: "As digital marketing evolves, compliance with GDPR and other privacy frameworks becomes critical for developers and legal practitioners alike...",
     published: true
+  },
+  {
+    id: "9",
+    slug: "extension-time-challenge-arbitral-awards",
+    title: "Extension of Time to Challenge Arbitral Awards under the 1996 English Arbitration Act",
+    date: "November 9, 2023",
+    category: "Dispute Resolution",
+    readTime: "7 min read",
+    excerpt: "Examining the jurisprudence of extension of time to challenge arbitral awards, published in the Kluwer Arbitration Blog.",
+    content: "An analysis of recent case law regarding the strict timelines imposed by the 1996 Arbitration Act and the circumstances under which courts grant extensions...",
+    published: true
   }
-];
+].sort((a, b) => {
+  // Handle year-only dates by assuming Jan 1
+  const dateA = a.date.length === 4 ? new Date(`${a.date}-01-01`) : new Date(a.date);
+  const dateB = b.date.length === 4 ? new Date(`${b.date}-01-01`) : new Date(b.date);
+  return dateB.getTime() - dateA.getTime();
+});
 
 export const PUBLICATIONS: Publication[] = [
   {
@@ -147,7 +152,7 @@ export const PUBLICATIONS: Publication[] = [
     link: "#",
     published: true
   }
-];
+].sort((a, b) => parseInt(b.year) - parseInt(a.year));
 
 export const EXPERTISE = [
   "International Financial Law",

@@ -9,12 +9,16 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { login } = useData();
+  const { login, isAuthenticated } = useData();
   const router = useRouter();
 
   useEffect(() => {
     document.title = 'Admin Login | Frankline Chisom Ebere';
-  }, []);
+    // Redirect immediately if already authenticated
+    if (isAuthenticated) {
+        router.replace('/admin');
+    }
+  }, [isAuthenticated, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,7 +28,8 @@ export default function LoginPage() {
     try {
       const success = await login(email, password);
       if (success) {
-        router.push('/admin');
+        // Login successful, router.replace prevents going back to login page
+        router.replace('/admin');
       } else {
         setError(true);
       }
@@ -35,6 +40,11 @@ export default function LoginPage() {
       setIsLoading(false);
     }
   };
+
+  // If already authenticated, show nothing or a loader while redirecting
+  if (isAuthenticated) {
+    return null; 
+  }
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4 bg-slate-50">

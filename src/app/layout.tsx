@@ -55,11 +55,15 @@ export const metadata: Metadata = {
     },
   },
 
-  // Explicitly pointing to the public/favicon.svg
+  // Standard favicon configuration
   icons: {
-    icon: '/favicon.svg',
-    shortcut: '/favicon.svg',
-    apple: '/favicon.svg', 
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+    ],
+    apple: [
+      { url: '/apple-touch-icon.png' }, // Assuming you might add this later, or reuse a png
+    ],
   },
 
   verification: {
