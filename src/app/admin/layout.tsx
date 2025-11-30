@@ -105,17 +105,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="min-h-screen bg-slate-50 flex font-sans">
-      {/* Mobile Header */}
-      <div className="md:hidden fixed top-0 left-0 right-0 bg-primary text-white p-4 flex justify-between items-center z-20 shadow-md">
+      {/* Mobile Header - Increased z-index to 50 to sit above Inbox overlays */}
+      <div className="md:hidden fixed top-0 left-0 right-0 bg-primary text-white p-4 flex justify-between items-center z-50 shadow-md">
         <div className="font-sans font-bold">Admin Console</div>
         <button onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
             {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
 
-      {/* Sidebar */}
+      {/* Sidebar - Increased z-index to 40 to sit above Inbox overlays but below Header */}
       <aside className={`
-        w-64 bg-primary text-slate-400 flex flex-col fixed h-full z-10 transition-transform duration-300
+        w-64 bg-primary text-slate-400 flex flex-col fixed h-full z-40 transition-transform duration-300
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0
         pt-16 md:pt-0
       `}>
@@ -125,7 +125,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </Link>
           <div className="text-xs uppercase tracking-widest mt-1 opacity-50">Admin Console</div>
         </div>
-        <nav className="flex-1 px-4 space-y-2 mt-4 z-88888">
+        <nav className="flex-1 px-4 space-y-2 mt-4">
           <AdminLink href="/admin" icon={<LayoutDashboard size={18} />} label="Overview" onClick={() => setIsSidebarOpen(false)} />
           {/* Analytics link removed as it's now part of Overview */}
           <AdminLink href="/admin/inbox" icon={<Inbox size={18} />} label="Inbox" onClick={() => setIsSidebarOpen(false)} />

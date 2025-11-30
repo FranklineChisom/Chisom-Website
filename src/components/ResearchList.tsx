@@ -33,6 +33,12 @@ const ResearchList: React.FC<ResearchListProps> = ({ initialPublications }) => {
     }
   };
 
+  // Helper to safely get valid co-authors
+  const getValidCoAuthors = (authors?: string[]) => {
+    if (!authors || authors.length === 0) return [];
+    return authors.filter(a => a && a.trim().length > 0);
+  };
+
   return (
     <div className="max-w-4xl mx-auto px-6 space-y-24">
       
@@ -58,30 +64,34 @@ const ResearchList: React.FC<ResearchListProps> = ({ initialPublications }) => {
       >
         <h2 className="text-xs font-bold tracking-widest text-slate-400 uppercase mb-8">Featured Works</h2>
         <div className="grid gap-8">
-          {featuredPubs.length > 0 ? featuredPubs.map((pub) => (
-            <div key={pub.id} className="bg-slate-50 p-8 rounded-none border border-slate-100 hover:border-slate-200 transition-colors">
-              <div className="flex justify-between items-start mb-4">
-                <span className="text-accent font-serif italic">{pub.venue}, {pub.year}</span>
-                <span className="text-xs font-bold text-slate-400 border border-slate-200 px-2 py-1 rounded-none">{pub.type}</span>
+          {featuredPubs.length > 0 ? featuredPubs.map((pub) => {
+            const validCoAuthors = getValidCoAuthors(pub.coAuthors);
+            
+            return (
+              <div key={pub.id} className="bg-slate-50 p-8 rounded-none border border-slate-100 hover:border-slate-200 transition-colors">
+                <div className="flex justify-between items-start mb-4">
+                  <span className="text-accent font-serif italic">{pub.venue}, {pub.year}</span>
+                  <span className="text-xs font-bold text-slate-400 border border-slate-200 px-2 py-1 rounded-none">{pub.type}</span>
+                </div>
+                <h3 className="font-serif text-2xl text-primary mb-4">{pub.title}</h3>
+                <p className="text-slate-600 mb-6 leading-relaxed text-sm md:text-base">
+                  {pub.abstract}
+                </p>
+                <div className="flex items-center gap-4">
+                  {pub.link && (
+                      <a href={pub.link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center text-sm font-medium text-primary hover:underline">
+                      Read Publication <ExternalLink size={14} className="ml-1" />
+                      </a>
+                  )}
+                  {validCoAuthors.length > 0 && (
+                      <span className="text-sm text-slate-400">
+                          Co-authored with {validCoAuthors.join(", ")}
+                      </span>
+                  )}
+                </div>
               </div>
-              <h3 className="font-serif text-2xl text-primary mb-4">{pub.title}</h3>
-              <p className="text-slate-600 mb-6 leading-relaxed text-sm md:text-base">
-                {pub.abstract}
-              </p>
-              <div className="flex items-center gap-4">
-                {pub.link && (
-                    <a href={pub.link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center text-sm font-medium text-primary hover:underline">
-                    Read Publication <ExternalLink size={14} className="ml-1" />
-                    </a>
-                )}
-                {pub.coAuthors && pub.coAuthors.length > 0 && (
-                    <span className="text-sm text-slate-400">
-                        Co-authored with {pub.coAuthors.join(", ")}
-                    </span>
-                )}
-              </div>
-            </div>
-          )) : (
+            );
+          }) : (
             <p className="text-slate-500 italic">No featured publications yet.</p>
           )}
         </div>
