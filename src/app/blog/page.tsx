@@ -4,6 +4,10 @@ import { BlogPost } from '@/types';
 import BlogList from '@/components/BlogList';
 import type { Metadata } from 'next';
 
+// Force dynamic rendering to ensure new articles appear immediately
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export const metadata: Metadata = {
   title: 'Blog',
   description: 'Articles on law, policy, and African economics by Frankline Chisom Ebere.',

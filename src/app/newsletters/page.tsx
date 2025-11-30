@@ -28,7 +28,7 @@ async function getNewsletters() {
     return []; 
   }
 
-  // Sort by date descending in JavaScript
+  // Sort by date descending in JavaScript to handle different date formats safely
   const sortedData = data.sort((a, b) => {
     return new Date(b.date).getTime() - new Date(a.date).getTime();
   });

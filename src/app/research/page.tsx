@@ -4,6 +4,10 @@ import { Publication } from '@/types';
 import type { Metadata } from 'next';
 import ResearchList from '@/components/ResearchList';
 
+// Force dynamic rendering to ensure new/updated publications appear immediately
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export const metadata: Metadata = {
   title: 'Research & Publications',
   description: 'Publications on African capital markets, AfCFTA, dispute settlement, and international financial law.',
