@@ -270,7 +270,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       id: post.id, slug: post.slug, title: post.title, date: post.date, category: post.category,
       read_time: post.readTime, excerpt: post.excerpt, content: post.content, cover_image: post.coverImage, published: post.published
     });
-    if (!error) loadBlogPosts();
+    if (!error) await loadBlogPosts();
     return !error;
   };
 
@@ -280,13 +280,13 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       read_time: post.readTime, excerpt: post.excerpt, content: post.content, cover_image: post.coverImage, published: post.published,
       updated_at: new Date().toISOString()
     }).eq('id', post.id);
-    if (!error) loadBlogPosts();
+    if (!error) await loadBlogPosts();
     return !error;
   };
 
   const deleteBlogPost = async (id: string): Promise<boolean> => {
     const { error } = await supabase.from('blog_posts').delete().eq('id', id);
-    if (!error) loadBlogPosts();
+    if (!error) await loadBlogPosts();
     return !error;
   };
 
@@ -295,7 +295,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       id: pub.id, title: pub.title, year: pub.year, venue: pub.venue, type: pub.type, featured: pub.featured,
       abstract: pub.abstract, co_authors: pub.coAuthors, link: pub.link, published: pub.published
     });
-    if (!error) loadPublications();
+    if (!error) await loadPublications();
     return !error;
   };
 
@@ -304,13 +304,13 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       title: pub.title, year: pub.year, venue: pub.venue, type: pub.type, featured: pub.featured,
       abstract: pub.abstract, co_authors: pub.coAuthors, link: pub.link, published: pub.published, updated_at: new Date().toISOString()
     }).eq('id', pub.id);
-    if (!error) loadPublications();
+    if (!error) await loadPublications();
     return !error;
   };
 
   const deletePublication = async (id: string): Promise<boolean> => {
     const { error } = await supabase.from('publications').delete().eq('id', id);
-    if (!error) loadPublications();
+    if (!error) await loadPublications();
     return !error;
   };
 
@@ -319,7 +319,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           id: item.id, slug: item.slug, title: item.title, date: item.date, description: item.description,
           content: item.content, cover_image: item.coverImage, published: item.published
       });
-    if (!error) loadNewsletters();
+    if (!error) await loadNewsletters();
     return !error;
   };
 
@@ -328,19 +328,20 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       slug: item.slug, title: item.title, date: item.date, description: item.description,
       content: item.content, cover_image: item.coverImage, published: item.published, updated_at: new Date().toISOString()
     }).eq('id', item.id);
-    if (!error) loadNewsletters();
+    if (!error) await loadNewsletters();
     return !error;
   };
 
   const deleteNewsletter = async (id: string): Promise<boolean> => {
     const { error } = await supabase.from('newsletters').delete().eq('id', id);
-    if (!error) loadNewsletters();
+    if (!error) await loadNewsletters();
     return !error;
   };
 
   // --- Messages ---
   const addMessage = async (msg: ContactMessage): Promise<boolean> => {
     const { error } = await supabase.from('messages').insert(msg);
+    if (!error) await loadMessages();
     return !error;
   };
 
@@ -370,7 +371,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         ? await supabase.from('drafts').update(payload).eq('id', draft.id)
         : await supabase.from('drafts').insert(payload);
     
-    if (!error) loadDrafts();
+    if (!error) await loadDrafts();
     return !error;
   };
 
@@ -388,9 +389,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { error } = await supabase.from(table).update({ deleted_at: new Date().toISOString() }).eq('id', id);
     
     if (!error) {
-        if (type === 'message') loadMessages();
-        if (type === 'sent') refreshSentEmails();
-        if (type === 'draft') loadDrafts();
+        if (type === 'message') await loadMessages();
+        if (type === 'sent') await refreshSentEmails();
+        if (type === 'draft') await loadDrafts();
     }
     return !error;
   };
@@ -400,9 +401,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { error } = await supabase.from(table).update({ deleted_at: null }).eq('id', id);
     
     if (!error) {
-        if (type === 'message') loadMessages();
-        if (type === 'sent') refreshSentEmails();
-        if (type === 'draft') loadDrafts();
+        if (type === 'message') await loadMessages();
+        if (type === 'sent') await refreshSentEmails();
+        if (type === 'draft') await loadDrafts();
     }
     return !error;
   };
@@ -427,6 +428,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       email: normalizedEmail,
       date: new Date().toISOString()
     });
+    if (!error) await loadSubscribers();
     return !error;
   };
 
