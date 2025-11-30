@@ -125,7 +125,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </Link>
           <div className="text-xs uppercase tracking-widest mt-1 opacity-50">Admin Console</div>
         </div>
-        <nav className="flex-1 px-4 space-y-2 mt-4">
+        <nav className="flex-1 px-4 space-y-2 mt-4 z-88888">
           <AdminLink href="/admin" icon={<LayoutDashboard size={18} />} label="Overview" onClick={() => setIsSidebarOpen(false)} />
           {/* Analytics link removed as it's now part of Overview */}
           <AdminLink href="/admin/inbox" icon={<Inbox size={18} />} label="Inbox" onClick={() => setIsSidebarOpen(false)} />
